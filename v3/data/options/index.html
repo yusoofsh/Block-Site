@@ -8,364 +8,498 @@
   <link rel="stylesheet" href="index.css">
 </head>
 <body>
-  <main>
-    <header class="top">
-      <img src="/data/icons/48.png" alt="" width="32" height="32">
-      <h1>Block Site</h1>
-    </header>
-    <div class="notice" data-i18n="options_intro"></div>
-
-    <!-- block -->
-    <section class="panel">
-      <div class="head">
-        <h2>
-          <a data-href="faq3" target="_blank" data-i18n="options_block_header"></a>
-        </h2>
-        <details>
-          <summary data-i18n="options_instruction"></summary>
-          <span data-i18n="options_sup_6"></span>
-        </details>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <img src="/data/icons/32.png" alt="" width="28" height="28">
+        <span>Block Site</span>
       </div>
-      <label for="new-hostname" class="hint" data-i18n="options_new_hostname"></label>
-      <form id="add" class="inline">
-        <input type="text" id="new-hostname" name="hostname" placeholder="e.g.: www.google.com">
-        <input type="submit" class="btn-primary" data-i18n-value="value" data-i18n="options_add">
-      </form>
-    </section>
+      <nav>
+        <a href="#/sites" data-nav="sites">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"></path></svg>
+          <span data-i18n="settings_nav_sites"></span>
+        </a>
+        <a href="#/lock" data-nav="lock">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>
+          <span data-i18n="settings_nav_lock"></span>
+        </a>
+        <a href="#/schedule" data-nav="schedule">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+          <span data-i18n="settings_nav_schedule"></span>
+        </a>
+        <a href="#/blocking" data-nav="blocking">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.2 7.8-8 9-4.8-1.2-8-4.5-8-9V6z"></path></svg>
+          <span data-i18n="settings_nav_blocking"></span>
+        </a>
+        <a href="#/page" data-nav="page">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 9h18"></path></svg>
+          <span data-i18n="settings_nav_page"></span>
+        </a>
+        <a href="#/backup" data-nav="backup">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"></path></svg>
+          <span data-i18n="settings_nav_backup"></span>
+        </a>
+      </nav>
+    </aside>
 
-    <!-- list -->
-    <section class="panel" id="list" data-visible=false>
-      <div class="head">
-        <h2 data-i18n="options_list_header"></h2>
-        <button type="button" class="btn btn-danger btn-sm push" id="remove-all" data-i18n="options_remove_all"></button>
-      </div>
-      <template>
-        <div>
-          <span title="Click to insert the rule" data-id="href">HTTP://</span>
-          <input type="text" data-id="redirect" placeholder="Optional redirect URL or 'close' keyword." title="Backslash-escaped digits (\1 to \9) can be used to insert the corresponding capture groups. Adding capture groups to the generated URL might cause it to match the blocking rule again, potentially leading to multiple redirects. Use caution.">
-          <span data-id="date">-</span>
-          <section>
-            <input type="button" class="btn-ghost btn-sm" data-cmd="toggle-note">
-            <input type="button" class="btn-danger btn-sm" data-cmd="remove">
-          </section>
-          <textarea data-id="note" class="note" data-i18n="options_note" data-i18n-value="placeholder"></textarea>
-        </div>
-      </template>
-      <div id="rules-container"></div>
-    </section>
+    <div class="content">
+      <main class="pages">
 
-    <!-- schedule -->
-    <section class="panel">
-      <div class="head">
-        <h2>
-          <a data-href="faq12" target="_blank" data-i18n="options_schedule_header"></a>
-        </h2>
-        <details>
-          <summary data-i18n="options_instruction"></summary>
-          <span data-i18n="options_sup_11"></span>
-        </details>
-      </div>
-      <form id="schedule-helper">
-        <p data-i18n="options_sch_helper_1"></p>
-        <div>
-          <span>From</span>
-          <input type="time" class="input" name="start" required>
-          <span>To</span>
-          <input data-id="Mon" type="time" class="input" name="end" required>
-        </div>
-        <div class="choices days">
-          <label class="choice"><input type="checkbox" checked data-id="Mon"><span class="card"><b>Monday</b></span></label>
-          <label class="choice"><input type="checkbox" checked data-id="Tue"><span class="card"><b>Tuesday</b></span></label>
-          <label class="choice"><input type="checkbox" checked data-id="Wed"><span class="card"><b>Wednesday</b></span></label>
-          <label class="choice"><input type="checkbox" checked data-id="Thu"><span class="card"><b>Thursday</b></span></label>
-          <label class="choice"><input type="checkbox" checked data-id="Fri"><span class="card"><b>Friday</b></span></label>
-          <label class="choice"><input type="checkbox" checked data-id="Sat"><span class="card"><b>Saturday</b></span></label>
-          <label class="choice"><input type="checkbox" checked data-id="Sun"><span class="card"><b>Sunday</b></span></label>
-        </div>
-        <div>
-          <input type="submit" class="btn-primary" data-i18n-value="value" data-i18n="options_sch_helper_2">
-          <input type="button" id="clean-schedules" data-i18n-value="value" data-i18n="options_sch_helper_3">
-        </div>
-      </form>
-      <form id=schedule>
-        <div>
-          <h3>Date</h3>
-          <h3>From</h3>
-          <h3>To</h3>
-          <span>-</span>
-          <span>Monday</span>
-          <input data-id="Mon" type="time" class="input" name="start">
-          <input data-id="Mon" type="time" class="input" name="end">
-          <input type="button" value="Add" class="btn-sm" data-cmd="add">
-          <span>Tuesday</span>
-          <input data-id="Tue" type="time" class="input" name="start">
-          <input data-id="Tue" type="time" class="input" name="end">
-          <input type="button" value="Add" class="btn-sm" data-cmd="add">
-          <span>Wednesday</span>
-          <input data-id="Wed" type="time" class="input" name="start">
-          <input data-id="Wed" type="time" class="input" name="end">
-          <input type="button" value="Add" class="btn-sm" data-cmd="add">
-          <span>Thursday</span>
-          <input data-id="Thu" type="time" class="input" name="start">
-          <input data-id="Thu" type="time" class="input" name="end">
-          <input type="button" value="Add" class="btn-sm" data-cmd="add">
-          <span>Friday</span>
-          <input data-id="Fri" type="time" class="input" name="start">
-          <input data-id="Fri" type="time" class="input" name="end">
-          <input type="button" value="Add" class="btn-sm" data-cmd="add">
-          <span>Saturday</span>
-          <input data-id="Sat" type="time" class="input" name="start">
-          <input data-id="Sat" type="time" class="input" name="end">
-          <input type="button" value="Add" class="btn-sm" data-cmd="add">
-          <span>Sunday</span>
-          <input data-id="Sun" type="time" class="input" name="start">
-          <input data-id="Sun" type="time" class="input" name="end">
-          <input type="button" value="Add" class="btn-sm" data-cmd="add">
-          <span data-i18n="options_hostname"></span>
-          <input type="text" list="rules" name="hostname" data-i18n="options_sup_12" data-i18n-value="placeholder" style="grid-column: 2/5;">
-        </div>
-        <datalist id="rules"></datalist>
-        <p class="offset">
-          <label for="schedule-offset">
-            <a data-href="faq19" target="_blank" data-i18n="options_schedule_offset"></a>
-          </label>
-          <span id="local-time"></span>
-          <input type="number" id="schedule-offset">
-        </p>
-      </form>
-    </section>
-
-    <!-- blocking options -->
-    <section class="panel">
-      <h2 data-i18n="options_blocing_options_header"></h2>
-      <div class="settings">
-        <div class="setting">
-          <label for="initialBlock" data-i18n="options_startup"></label>
-          <input type="checkbox" class="toggle" id="initialBlock">
-        </div>
-        <div class="setting sub">
-          <label for="initialBlockCurrent" data-i18n="options_startup_current"></label>
-          <input type="checkbox" class="toggle" id="initialBlockCurrent">
-        </div>
-        <div class="setting">
-          <label for="reverse" data-i18n="options_reverse"></label>
-          <input type="checkbox" class="toggle" id="reverse">
-        </div>
-        <div class="setting">
-          <label for="contextmenu-pause" data-i18n="options_contextmenu_pause"></label>
-          <input type="checkbox" class="toggle" id="contextmenu-pause">
-        </div>
-        <div class="setting">
-          <label for="contextmenu-resume" data-i18n="options_contextmenu_resume"></label>
-          <input type="checkbox" class="toggle" id="contextmenu-resume">
-        </div>
-        <div class="setting">
-          <label for="contextmenu-remove-temporary" data-i18n="options_contextmenu_remove_temporary"></label>
-          <input type="checkbox" class="toggle" id="contextmenu-remove-temporary">
-        </div>
-        <div class="field">
-          <label for="pause-periods" data-i18n="options_contextmenu_periods"></label>
-          <input type="text" value="1, 2, 4" id="pause-periods">
-        </div>
-        <div class="setting">
-          <label for="per-site-pause-max-size" data-i18n="options_per_site_pause_max_size"></label>
-          <input type="number" id="per-site-pause-max-size" min=0>
-        </div>
-        <div class="setting">
-          <label for="contextmenu-top" data-i18n="options_contextmenu_top"></label>
-          <input type="checkbox" class="toggle" id="contextmenu-top">
-        </div>
-        <div class="setting">
-          <label for="contextmenu-frame" data-i18n="options_contextmenu_frame"></label>
-          <input type="checkbox" class="toggle" id="contextmenu-frame">
-        </div>
-        <div class="setting">
-          <label for="disable-actions-options" data-i18n="options_disable_actions_options"></label>
-          <input type="checkbox" class="toggle" id="disable-actions-options">
-        </div>
-        <div class="setting">
-          <label for="disable-actions-page" data-i18n="options_disable_actions_page"></label>
-          <input type="checkbox" class="toggle" id="disable-actions-page">
-        </div>
-        <div class="setting">
-          <label for="notification" data-i18n="options_notification"></label>
-          <input type="checkbox" class="toggle" id="notification">
-        </div>
-        <div class="setting">
-          <label for="popup" data-i18n="options_popup"></label>
-          <input type="checkbox" class="toggle" id="popup">
-        </div>
-        <div class="setting">
-          <label for="contexts" data-i18n="options_contexts"></label>
-          <select id="contexts">
-            <option value="both" data-i18n="options_contexts_both"></option>
-            <option value="page" data-i18n="options_contexts_page"></option>
-          </select>
-        </div>
-        <div class="setting">
-          <span data-i18n="options_theme"></span>
-        </div>
-        <div class="setting sub">
-          <label for="mode-top" data-i18n="options_theme_top"></label>
-          <select id="mode-top">
-            <option value="complete" data-i18n="options_complete"></option>
-            <option value="simple" data-i18n="options_simple"></option>
-          </select>
-        </div>
-        <div class="setting sub">
-          <label for="mode-frame" data-i18n="options_theme_frame"></label>
-          <select id="mode-frame">
-            <option value="complete" data-i18n="options_complete"></option>
-            <option value="simple" data-i18n="options_simple"></option>
-          </select>
-        </div>
-      </div>
-    </section>
-
-    <!-- unlock options -->
-    <section class="panel">
-      <h2 data-i18n="options_unlock_header"></h2>
-      <div class="settings">
-        <div class="setting">
-          <label for="timeout" data-i18n="options_allow_access"></label>
-          <input type="number" min="1" id="timeout" required>
-        </div>
-        <div class="field">
-          <label for="unlock-periods" data-i18n="options_unlock_periods"></label>
-          <input type="text" id="unlock-periods" placeholder="1, 5, 15, 60">
-        </div>
-        <div class="field">
-          <span id="unlock-default-label" data-i18n="options_unlock_default"></span>
-          <div class="choices" id="unlock-default" role="radiogroup" aria-labelledby="unlock-default-label"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- auto-lock -->
-    <section class="panel">
-      <h2 id="idle-header" data-i18n="options_idle_header"></h2>
-      <p class="hint" data-i18n="options_idle_lock"></p>
-      <div class="choices compact" id="idle-lock" role="radiogroup" aria-labelledby="idle-header"></div>
-      <div class="setting">
-        <label for="idle-custom" data-i18n="options_idle_custom"></label>
-        <input type="number" id="idle-custom" min="0" step="any">
-      </div>
-    </section>
-
-    <!-- password -->
-    <section class="panel">
-      <h2 data-i18n="options_password_options_header"></h2>
-      <div class="settings">
-        <div class="setting">
-          <label for="no-password-on-add" data-i18n="options_no_pass_on_add"></label>
-          <input type="checkbox" class="toggle" id="no-password-on-add">
-        </div>
-        <div class="setting">
-          <label for="no-password-on-unlock" data-i18n="options_no_pass_on_unlock"></label>
-          <input type="checkbox" class="toggle" id="no-password-on-unlock">
-        </div>
-        <div class="setting">
-          <label for="wrong" data-i18n="options_block_period"></label>
-          <input type="number" min="1" id="wrong" required>
-        </div>
-      </div>
-    </section>
-
-    <!-- page -->
-    <section class="panel">
-      <h2 data-i18n="options_page_header"></h2>
-      <div class="settings">
-        <div class="field">
-          <label for="redirect" data-i18n="options_redirect"></label>
-          <input type="text" id="redirect" data-i18n="options_sup_1" data-i18n-value="placeholder">
-        </div>
-        <div class="field">
-          <label for="message" data-i18n="options_user_message"></label>
-          <textarea id="message" rows="6" data-i18n="options_sup_2" data-i18n-value="placeholder"></textarea>
-        </div>
-        <div class="field">
-          <label for="css" data-i18n="options_custom_css"></label>
-          <textarea id="css" rows="6" data-i18n="options_sup_3" data-i18n-value="placeholder"></textarea>
-        </div>
-        <div class="setting">
-          <label for="title" data-i18n="options_resolve"></label>
-          <input type="checkbox" class="toggle" id="title">
-        </div>
-        <div class="setting">
-          <div class="text">
-            <label for="close" data-i18n="options_close_blocked"></label>
-            <small class="hint" data-i18n="options_close_msg_blocked"></small>
+        <!-- sites -->
+        <section data-page="sites">
+          <header class="page-head">
+            <h1 data-i18n="settings_nav_sites"></h1>
+            <p data-i18n="settings_sites_desc"></p>
+          </header>
+          <div class="notice" id="intro">
+            <span data-i18n="options_intro"></span>
+            <button type="button" class="btn-ghost btn-sm" id="intro-dismiss" data-i18n="settings_dismiss" data-i18n-value="title">✕</button>
           </div>
-          <input type="number" min="0" id="close" required>
+
+          <div class="block">
+            <div class="head">
+              <h2>
+                <a data-href="faq3" target="_blank" data-i18n="options_block_header"></a>
+              </h2>
+              <details>
+                <summary data-i18n="options_instruction"></summary>
+                <span data-i18n="options_sup_6"></span>
+              </details>
+            </div>
+            <div class="group">
+              <div class="row stack">
+                <label class="label" for="new-hostname"><b data-i18n="options_new_hostname"></b></label>
+                <form id="add" class="inline">
+                  <input type="text" id="new-hostname" name="hostname" placeholder="e.g.: www.google.com">
+                  <input type="submit" class="btn-primary" data-i18n-value="value" data-i18n="options_add">
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <div class="block" id="list" data-visible=false>
+            <div class="head">
+              <h2 data-i18n="options_list_header"></h2>
+              <button type="button" class="btn-danger btn-sm push" id="remove-all" data-i18n="options_remove_all"></button>
+            </div>
+            <template>
+              <div>
+                <span title="Click to insert the rule" data-id="href">HTTP://</span>
+                <input type="text" data-id="redirect" placeholder="Optional redirect URL or 'close' keyword." title="Backslash-escaped digits (\1 to \9) can be used to insert the corresponding capture groups. Adding capture groups to the generated URL might cause it to match the blocking rule again, potentially leading to multiple redirects. Use caution.">
+                <span data-id="date">-</span>
+                <section>
+                  <input type="button" class="btn-ghost btn-sm" data-cmd="toggle-note">
+                  <input type="button" class="btn-danger btn-sm" data-cmd="remove">
+                </section>
+                <textarea data-id="note" class="note" data-i18n="options_note" data-i18n-value="placeholder"></textarea>
+              </div>
+            </template>
+            <div class="group">
+              <div id="rules-container"></div>
+            </div>
+          </div>
+
+          <div class="block">
+            <div class="head">
+              <h2>
+                <a data-href="faq10" target="_blank" data-i18n="options_rules_header"></a>
+              </h2>
+              <details>
+                <summary data-i18n="options_instruction"></summary>
+                <span data-i18n="options_sup_8"></span>
+                <pre><code><table>
+                <tr>
+                  <td colspan="2"># Line-separated list of hostnames to be blocked. Lines start with "#" are ignored</td>
+                </tr>
+                <tr>
+                  <td># hostname to be blocked</td>
+                  <td>redirects to (optional)</td>
+                </tr>
+                <tr>
+                  <td>www.google.com</td>
+                  <td>https://www.bing.com</td>
+                </tr>
+                </table></code></pre>
+              </details>
+            </div>
+            <div class="group">
+              <div class="row">
+                <div class="label"><small data-i18n="settings_import_txt_hint"></small></div>
+                <input type="button" data-i18n-value="value" data-i18n="options_import_txt" data-cmd="import-txt">
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- lock: unlocking, auto-lock and password -->
+        <section data-page="lock" hidden>
+          <header class="page-head">
+            <h1 data-i18n="settings_nav_lock"></h1>
+            <p data-i18n="settings_lock_desc"></p>
+          </header>
+
+          <div class="block">
+            <div class="head">
+              <h2 data-i18n="options_unlock_header"></h2>
+            </div>
+            <div class="group">
+              <div class="row stack">
+                <div class="label">
+                  <b id="unlock-default-label" data-i18n="settings_unlock_for"></b>
+                  <small data-i18n="settings_unlock_for_hint"></small>
+                </div>
+                <div class="choices" id="unlock-default" role="radiogroup" aria-labelledby="unlock-default-label"></div>
+              </div>
+              <div class="row">
+                <label class="label" for="unlock-custom"><b data-i18n="options_idle_custom"></b></label>
+                <input type="number" id="unlock-custom" min="1" step="any">
+              </div>
+            </div>
+          </div>
+
+          <div class="block">
+            <div class="head">
+              <h2 id="idle-header" data-i18n="options_idle_header"></h2>
+            </div>
+            <div class="group">
+              <div class="row stack">
+                <div class="label"><small data-i18n="options_idle_lock"></small></div>
+                <div class="choices compact" id="idle-lock" role="radiogroup" aria-labelledby="idle-header"></div>
+              </div>
+              <div class="row">
+                <label class="label" for="idle-custom"><b data-i18n="options_idle_custom"></b></label>
+                <input type="number" id="idle-custom" min="0" step="any">
+              </div>
+            </div>
+          </div>
+
+          <div class="block">
+            <div class="head">
+              <h2 data-i18n="options_password_options_header"></h2>
+            </div>
+            <div class="group">
+              <div class="row">
+                <label class="label" for="no-password-on-add"><b data-i18n="options_no_pass_on_add"></b></label>
+                <input type="checkbox" class="toggle" id="no-password-on-add">
+              </div>
+              <div class="row">
+                <label class="label" for="no-password-on-unlock"><b data-i18n="options_no_pass_on_unlock"></b></label>
+                <input type="checkbox" class="toggle" id="no-password-on-unlock">
+              </div>
+              <div class="row">
+                <label class="label" for="wrong"><b data-i18n="options_block_period"></b></label>
+                <input type="number" min="1" id="wrong" required>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- schedule -->
+        <section data-page="schedule" hidden>
+          <header class="page-head">
+            <h1 data-i18n="settings_nav_schedule"></h1>
+            <p data-i18n="settings_schedule_desc"></p>
+          </header>
+          <div class="block">
+            <div class="head">
+              <h2>
+                <a data-href="faq12" target="_blank" data-i18n="options_schedule_header"></a>
+              </h2>
+              <details>
+                <summary data-i18n="options_instruction"></summary>
+                <span data-i18n="options_sup_11"></span>
+              </details>
+            </div>
+            <div class="group">
+              <div class="row stack">
+                <form id="schedule-helper">
+                  <p data-i18n="options_sch_helper_1"></p>
+                  <div>
+                    <span>From</span>
+                    <input type="time" name="start" required>
+                    <span>To</span>
+                    <input data-id="Mon" type="time" name="end" required>
+                  </div>
+                  <div class="choices days">
+                    <label class="choice"><input type="checkbox" checked data-id="Mon"><span class="card"><b>Monday</b></span></label>
+                    <label class="choice"><input type="checkbox" checked data-id="Tue"><span class="card"><b>Tuesday</b></span></label>
+                    <label class="choice"><input type="checkbox" checked data-id="Wed"><span class="card"><b>Wednesday</b></span></label>
+                    <label class="choice"><input type="checkbox" checked data-id="Thu"><span class="card"><b>Thursday</b></span></label>
+                    <label class="choice"><input type="checkbox" checked data-id="Fri"><span class="card"><b>Friday</b></span></label>
+                    <label class="choice"><input type="checkbox" checked data-id="Sat"><span class="card"><b>Saturday</b></span></label>
+                    <label class="choice"><input type="checkbox" checked data-id="Sun"><span class="card"><b>Sunday</b></span></label>
+                  </div>
+                  <div>
+                    <input type="submit" class="btn-primary" data-i18n-value="value" data-i18n="options_sch_helper_2">
+                    <input type="button" id="clean-schedules" data-i18n-value="value" data-i18n="options_sch_helper_3">
+                  </div>
+                </form>
+              </div>
+              <div class="row stack">
+                <form id=schedule>
+                  <div>
+                    <h3>Date</h3>
+                    <h3>From</h3>
+                    <h3>To</h3>
+                    <span>-</span>
+                    <span>Monday</span>
+                    <input data-id="Mon" type="time" name="start">
+                    <input data-id="Mon" type="time" name="end">
+                    <input type="button" value="Add" class="btn-sm" data-cmd="add">
+                    <span>Tuesday</span>
+                    <input data-id="Tue" type="time" name="start">
+                    <input data-id="Tue" type="time" name="end">
+                    <input type="button" value="Add" class="btn-sm" data-cmd="add">
+                    <span>Wednesday</span>
+                    <input data-id="Wed" type="time" name="start">
+                    <input data-id="Wed" type="time" name="end">
+                    <input type="button" value="Add" class="btn-sm" data-cmd="add">
+                    <span>Thursday</span>
+                    <input data-id="Thu" type="time" name="start">
+                    <input data-id="Thu" type="time" name="end">
+                    <input type="button" value="Add" class="btn-sm" data-cmd="add">
+                    <span>Friday</span>
+                    <input data-id="Fri" type="time" name="start">
+                    <input data-id="Fri" type="time" name="end">
+                    <input type="button" value="Add" class="btn-sm" data-cmd="add">
+                    <span>Saturday</span>
+                    <input data-id="Sat" type="time" name="start">
+                    <input data-id="Sat" type="time" name="end">
+                    <input type="button" value="Add" class="btn-sm" data-cmd="add">
+                    <span>Sunday</span>
+                    <input data-id="Sun" type="time" name="start">
+                    <input data-id="Sun" type="time" name="end">
+                    <input type="button" value="Add" class="btn-sm" data-cmd="add">
+                    <span data-i18n="options_hostname"></span>
+                    <input type="text" list="rules" name="hostname" data-i18n="options_sup_12" data-i18n-value="placeholder" style="grid-column: 2/5;">
+                  </div>
+                  <datalist id="rules"></datalist>
+                  <p class="offset">
+                    <label for="schedule-offset">
+                      <a data-href="faq19" target="_blank" data-i18n="options_schedule_offset"></a>
+                    </label>
+                    <span id="local-time"></span>
+                    <input type="number" id="schedule-offset">
+                  </p>
+                </form>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- blocking options -->
+        <section data-page="blocking" hidden>
+          <header class="page-head">
+            <h1 data-i18n="options_blocing_options_header"></h1>
+            <p data-i18n="settings_blocking_desc"></p>
+          </header>
+
+          <div class="block">
+            <div class="head">
+              <h2 data-i18n="settings_group_behavior"></h2>
+            </div>
+            <div class="group">
+              <div class="row">
+                <label class="label" for="initialBlock"><b data-i18n="options_startup"></b></label>
+                <input type="checkbox" class="toggle" id="initialBlock">
+              </div>
+              <div class="row sub">
+                <label class="label" for="initialBlockCurrent"><b data-i18n="options_startup_current"></b></label>
+                <input type="checkbox" class="toggle" id="initialBlockCurrent">
+              </div>
+              <div class="row">
+                <label class="label" for="reverse"><b data-i18n="options_reverse"></b></label>
+                <input type="checkbox" class="toggle" id="reverse">
+              </div>
+              <div class="row">
+                <label class="label" for="contexts"><b data-i18n="options_contexts"></b></label>
+                <select id="contexts">
+                  <option value="both" data-i18n="options_contexts_both"></option>
+                  <option value="page" data-i18n="options_contexts_page"></option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="block">
+            <div class="head">
+              <h2 data-i18n="settings_group_menu"></h2>
+            </div>
+            <div class="group">
+              <div class="row">
+                <label class="label" for="contextmenu-pause"><b data-i18n="options_contextmenu_pause"></b></label>
+                <input type="checkbox" class="toggle" id="contextmenu-pause">
+              </div>
+              <div class="row">
+                <label class="label" for="contextmenu-resume"><b data-i18n="options_contextmenu_resume"></b></label>
+                <input type="checkbox" class="toggle" id="contextmenu-resume">
+              </div>
+              <div class="row">
+                <label class="label" for="contextmenu-remove-temporary"><b data-i18n="options_contextmenu_remove_temporary"></b></label>
+                <input type="checkbox" class="toggle" id="contextmenu-remove-temporary">
+              </div>
+              <div class="row">
+                <label class="label" for="contextmenu-top"><b data-i18n="options_contextmenu_top"></b></label>
+                <input type="checkbox" class="toggle" id="contextmenu-top">
+              </div>
+              <div class="row">
+                <label class="label" for="contextmenu-frame"><b data-i18n="options_contextmenu_frame"></b></label>
+                <input type="checkbox" class="toggle" id="contextmenu-frame">
+              </div>
+              <div class="row">
+                <label class="label" for="pause-periods"><b data-i18n="options_contextmenu_periods"></b></label>
+                <input type="text" value="1, 2, 4" id="pause-periods">
+              </div>
+              <div class="row">
+                <label class="label" for="per-site-pause-max-size"><b data-i18n="options_per_site_pause_max_size"></b></label>
+                <input type="number" id="per-site-pause-max-size" min=0>
+              </div>
+            </div>
+          </div>
+
+          <div class="block">
+            <div class="head">
+              <h2 data-i18n="settings_group_interface"></h2>
+            </div>
+            <div class="group">
+              <div class="row">
+                <label class="label" for="notification"><b data-i18n="options_notification"></b></label>
+                <input type="checkbox" class="toggle" id="notification">
+              </div>
+              <div class="row">
+                <label class="label" for="popup"><b data-i18n="options_popup"></b></label>
+                <input type="checkbox" class="toggle" id="popup">
+              </div>
+              <div class="row">
+                <label class="label" for="disable-actions-options"><b data-i18n="options_disable_actions_options"></b></label>
+                <input type="checkbox" class="toggle" id="disable-actions-options">
+              </div>
+              <div class="row">
+                <label class="label" for="disable-actions-page"><b data-i18n="options_disable_actions_page"></b></label>
+                <input type="checkbox" class="toggle" id="disable-actions-page">
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- block page -->
+        <section data-page="page" hidden>
+          <header class="page-head">
+            <h1 data-i18n="options_page_header"></h1>
+            <p data-i18n="settings_page_desc"></p>
+          </header>
+
+          <div class="block">
+            <div class="head">
+              <h2 data-i18n="options_theme"></h2>
+            </div>
+            <div class="group">
+              <div class="row">
+                <label class="label" for="mode-top"><b data-i18n="options_theme_top"></b></label>
+                <select id="mode-top">
+                  <option value="complete" data-i18n="options_complete"></option>
+                  <option value="simple" data-i18n="options_simple"></option>
+                </select>
+              </div>
+              <div class="row">
+                <label class="label" for="mode-frame"><b data-i18n="options_theme_frame"></b></label>
+                <select id="mode-frame">
+                  <option value="complete" data-i18n="options_complete"></option>
+                  <option value="simple" data-i18n="options_simple"></option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="block">
+            <div class="head">
+              <h2 data-i18n="settings_group_content"></h2>
+            </div>
+            <div class="group">
+              <div class="row stack">
+                <label class="label" for="redirect"><b data-i18n="options_redirect"></b></label>
+                <input type="text" id="redirect" data-i18n="options_sup_1" data-i18n-value="placeholder">
+              </div>
+              <div class="row stack">
+                <label class="label" for="message"><b data-i18n="options_user_message"></b></label>
+                <textarea id="message" rows="6" data-i18n="options_sup_2" data-i18n-value="placeholder"></textarea>
+              </div>
+              <div class="row stack">
+                <label class="label" for="css"><b data-i18n="options_custom_css"></b></label>
+                <textarea id="css" rows="6" data-i18n="options_sup_3" data-i18n-value="placeholder"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="block">
+            <div class="head">
+              <h2 data-i18n="settings_group_behavior"></h2>
+            </div>
+            <div class="group">
+              <div class="row">
+                <label class="label" for="close">
+                  <b data-i18n="options_close_blocked"></b>
+                  <small data-i18n="options_close_msg_blocked"></small>
+                </label>
+                <input type="number" min="0" id="close" required>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- backup -->
+        <section data-page="backup" hidden>
+          <header class="page-head">
+            <h1 data-i18n="settings_nav_backup"></h1>
+            <p data-i18n="settings_backup_desc"></p>
+          </header>
+
+          <div class="block">
+            <div class="head">
+              <h2 data-i18n="options_import_header"></h2>
+            </div>
+            <div class="group">
+              <div class="row">
+                <div class="label"><small data-i18n="options_sup_10"></small></div>
+                <div class="buttons">
+                  <input type="button" data-i18n-value="value" data-i18n="options_export_json" data-cmd="export">
+                  <input type="button" data-i18n-value="value" data-i18n="options_import_json" data-cmd="import-json">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="block">
+            <div class="head">
+              <h2 data-i18n="options_tools_header"></h2>
+            </div>
+            <div class="group">
+              <div class="row">
+                <div class="buttons">
+                  <input type="button" data-i18n-value="value" data-i18n="options_rate" id="rate">
+                  <input type="button" data-i18n-value="value" data-i18n="options_support" id="support">
+                  <input type="button" data-i18n-value="value" data-i18n="options_preview" id="preview">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="notice">This extension supports managed storage. All the preferences can be pre-configured by <a href="https://add0n.com/block-site.html#faq15">the domain administrator</a></div>
+        </section>
+      </main>
+
+      <!-- master password and save, reachable from every page -->
+      <div class="dock">
+        <div id="tools" class="panel">
+          <form id="save-container" data-i18n="options_master_password_comment" data-i18n-value="title">
+            <input type="password" id="password" data-i18n="options_master_password" data-i18n-value="placeholder">
+            <input type="submit" data-i18n-value="value" data-i18n="options_unlock" data-cmd="unlock">
+          </form>
+          <input type="button" class="btn-primary" data-i18n-value="value" data-i18n="options_save" data-cmd="save" disabled="true">
         </div>
       </div>
-    </section>
-
-    <!-- rules -->
-    <section class="panel">
-      <div class="head">
-        <h2>
-          <a data-href="faq10" target="_blank" data-i18n="options_rules_header"></a>
-        </h2>
-        <details>
-          <summary data-i18n="options_instruction"></summary>
-          <span data-i18n="options_sup_8"></span>
-          <pre><code><table>
-          <tr>
-            <td colspan="2"># Line-separated list of hostnames to be blocked. Lines start with "#" are ignored</td>
-          </tr>
-          <tr>
-            <td># hostname to be blocked</td>
-            <td>redirects to (optional)</td>
-          </tr>
-          <tr>
-            <td>www.google.com</td>
-            <td>https://www.bing.com</td>
-          </tr>
-          </table></code></pre>
-        </details>
-      </div>
-      <input type="button" data-i18n-value="value" data-i18n="options_import_txt" data-cmd="import-txt">
-    </section>
-
-    <!-- tools -->
-    <section class="panel">
-      <h2 data-i18n="options_tools_header"></h2>
-      <div class="buttons">
-        <input type="button" data-i18n-value="value" data-i18n="options_rate" id="rate">
-        <input type="button" data-i18n-value="value" data-i18n="options_support" id="support">
-        <input type="button" data-i18n-value="value" data-i18n="options_preview" id="preview">
-      </div>
-    </section>
-
-    <!-- import -->
-    <section class="panel">
-      <div class="head">
-        <h2 data-i18n="options_import_header"></h2>
-        <details>
-          <summary data-i18n="options_instruction"></summary>
-          <div>
-            <span data-i18n="options_sup_10"></span>
-          </div>
-        </details>
-      </div>
-      <div id="import-container" class="buttons">
-        <input type="button" data-i18n-value="value" data-i18n="options_export_json" data-cmd="export">
-        <input type="button" data-i18n-value="value" data-i18n="options_import_json" data-cmd="import-json">
-      </div>
-    </section>
-
-    <div class="notice">This extension supports managed storage. All the preferences can be pre-configured by <a href="https://add0n.com/block-site.html#faq15">the domain administrator</a></div>
-
-    <!-- save -->
-    <div id="tools" class="panel">
-      <form id="save-container" data-i18n="options_master_password_comment" data-i18n-value="title">
-        <input type="password" id="password" data-i18n="options_master_password" data-i18n-value="placeholder">
-        <input type="submit" data-i18n-value="value" data-i18n="options_unlock" data-cmd="unlock">
-      </form>
-      <input type="button" class="btn-primary" data-i18n-value="value" data-i18n="options_save" data-cmd="save" disabled="true">
     </div>
-  </main>
+  </div>
   <notification-view id="toast"></notification-view>
 
   <script src="/data/components/notification-view/notification-view.js"></script>

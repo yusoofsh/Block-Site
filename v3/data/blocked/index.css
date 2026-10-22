@@ -87,9 +87,6 @@ a {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.path[hidden] {
-  display: none;
-}
 
 #message {
   margin: 18px 0 0;

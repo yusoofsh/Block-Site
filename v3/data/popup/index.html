@@ -19,17 +19,18 @@
   </div>
   <div id="unlocked" hidden>
     <span id="unlocked-count"></span>
-    <button type="button" class="btn btn-primary" id="lock-now" data-i18n="popup_lock_now"></button>
+    <button type="button" class="btn-primary" id="lock-now" data-i18n="popup_lock_now"></button>
   </div>
-  <div id="autolock">
-    <span id="idle-label" data-i18n="popup_idle_lock"></span>
-    <div class="choices compact" id="idle" role="radiogroup" aria-labelledby="idle-label"></div>
-  </div>
+  <button type="button" id="autolock">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+    <span id="autolock-text"></span>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+  </button>
   <input type="search" id="filter" data-i18n="popup_filter" data-i18n-value="placeholder">
   <div id="list"></div>
   <div id="empty" data-i18n="popup_empty" hidden></div>
   <template id="row">
-    <div class="row">
+    <div class="site">
       <div class="info">
         <span class="host"></span>
         <span class="note"></span>

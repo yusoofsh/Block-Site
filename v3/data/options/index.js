@@ -27,9 +27,7 @@ const warning = e => {
 };
 
 const DEFAULTS = {
-  'timeout': 60, // seconds; default unlock duration
-  'unlock-periods': [1, 5, 15, 60], // minutes offered on the blocked page
-  'unlock-default': 1, // minutes | 'tab' | 'session'
+  'unlock-default': 1, // how long an unlock lasts: minutes | 'tab' | 'session'
   'idle-lock': 0, // minutes of inactivity before every unlock is locked again, 0 = off
   'close': 0, // seconds
   'message': '',
@@ -40,7 +38,6 @@ const DEFAULTS = {
   'sha256': '',
   'password': '', // deprecated
   'wrong': 1, // minutes
-  'title': true,
   'reverse': false,
   'no-password-on-add': false,
   'no-password-on-unlock': false,
@@ -228,58 +225,56 @@ const choice = (name, value, label, hint) => {
   return e;
 };
 
-const UNLOCK_SPECIAL = [
+// quick-select cards plus a number input for any other value: picking a card
+// fills the input (a named card like 'tab' clears it), typing a number checks
+// the matching card or none
+const presets = (box, custom) => {
+  const mark = value => {
+    for (const r of box.querySelectorAll('input')) {
+      r.checked = r.value === String(value);
+    }
+  };
+  box.addEventListener('change', e => {
+    custom.value = isNaN(e.target.value) ? '' : e.target.value;
+  });
+  custom.addEventListener('input', () => mark(custom.value === '' ? '' : Number(custom.value)));
+  return {
+    get: () => box.querySelector('input:checked')?.value ?? custom.value,
+    set: value => {
+      custom.value = isNaN(value) ? '' : value;
+      mark(value);
+    }
+  };
+};
+
+// unlock duration: minutes, or 'tab' (while the tab is open) or 'session'
+const unlockBox = document.getElementById('unlock-default');
+const unlockCustom = document.getElementById('unlock-custom');
+for (const m of [1, 5, 15, 60]) {
+  unlockBox.appendChild(choice('unlock-default', m, humanDuration(m)));
+}
+for (const [value, label, hint] of [
   ['tab', 'blocked_unlock_tab_short', 'blocked_unlock_tab_hint'],
   ['session', 'blocked_unlock_session_short', 'blocked_unlock_session_hint']
-];
-
-// rebuild the "default unlock duration" cards from the periods list;
-// keeps the current (or a requested) selection when possible
-const rebuildUnlockDefault = desired => {
-  const box = document.getElementById('unlock-default');
-  const keep = desired ?? box.querySelector('input:checked')?.value;
-  const mins = document.getElementById('unlock-periods').value.split(/\s*,\s*/)
-    .map(Number).filter(n => Number.isFinite(n) && n > 0);
-  const uniq = [...new Set(mins)].sort((a, b) => a - b);
-  box.textContent = '';
-  for (const m of uniq) {
-    box.appendChild(choice('unlock-default', m, humanDuration(m)));
-  }
-  for (const [value, label, hint] of UNLOCK_SPECIAL) {
-    box.appendChild(choice('unlock-default', value, chrome.i18n.getMessage(label), chrome.i18n.getMessage(hint)));
-  }
-  const radios = [...box.querySelectorAll('input')];
-  // fall back to the first card (the shortest period, or "while tab is open")
-  (radios.find(r => r.value === keep) || radios[0]).checked = true;
-};
-document.getElementById('unlock-periods').addEventListener('input', () => rebuildUnlockDefault());
-
-// auto-lock: quick-select cards plus a custom number of minutes (0 = off).
-// A value that is not a preset leaves every card unchecked and lives in the number input.
-const IDLE_PRESETS = [0, 1, 5, 15, 30, 60];
-{
-  const box = document.getElementById('idle-lock');
-  for (const m of IDLE_PRESETS) {
-    const label = m ? chrome.i18n.getMessage('idle_min').replace('##', m) : chrome.i18n.getMessage('idle_off');
-    box.appendChild(choice('idle-lock', m, label));
-  }
+]) {
+  unlockBox.appendChild(choice('unlock-default', value, chrome.i18n.getMessage(label), chrome.i18n.getMessage(hint)));
 }
+// minutes are at least 1, 'tab' and 'session' pass through
+const unlockValue = value => isNaN(value) ? value : Math.max(Number(value) || 1, 1);
+const unlock = presets(unlockBox, unlockCustom);
+const getUnlock = () => unlockValue(unlock.get());
+const setUnlock = value => unlock.set(unlockValue(value));
+
+// auto-lock: minutes of inactivity, 0 = off
+const idleBox = document.getElementById('idle-lock');
 const idleCustom = document.getElementById('idle-custom');
-const markIdle = value => {
-  for (const r of document.querySelectorAll('#idle-lock input')) {
-    r.checked = Number(r.value) === value;
-  }
-};
-const getIdle = () => Math.max(0, Number(idleCustom.value) || 0);
-const setIdle = minutes => {
-  const value = Math.max(0, Number(minutes) || 0);
-  idleCustom.value = value;
-  markIdle(value);
-};
-document.getElementById('idle-lock').addEventListener('change', e => {
-  idleCustom.value = e.target.value; // picking a card fills the input
-});
-idleCustom.addEventListener('input', () => markIdle(getIdle()));
+for (const m of [0, 1, 5, 15, 30, 60]) {
+  const label = m ? chrome.i18n.getMessage('idle_min').replace('##', m) : chrome.i18n.getMessage('idle_off');
+  idleBox.appendChild(choice('idle-lock', m, label));
+}
+const idle = presets(idleBox, idleCustom);
+const getIdle = () => Math.max(0, Number(idle.get()) || 0);
+const setIdle = minutes => idle.set(Math.max(0, Number(minutes) || 0));
 
 const init = (table = true) => chrome.storage.local.get(DEFAULTS, ps => {
   Object.assign(prefs, ps);
@@ -297,7 +292,6 @@ const init = (table = true) => chrome.storage.local.get(DEFAULTS, ps => {
 
     prefs.blocked.filter(a => a).forEach(add);
   }
-  document.getElementById('title').checked = prefs.title;
   document.getElementById('disable-actions-options').checked = prefs['disable-actions-options'];
   document.getElementById('disable-actions-page').checked = prefs['disable-actions-page'];
   document.getElementById('notification').checked = prefs['notification'];
@@ -309,9 +303,7 @@ const init = (table = true) => chrome.storage.local.get(DEFAULTS, ps => {
   document.getElementById('reverse').checked = prefs.reverse;
   document.getElementById('no-password-on-add').checked = prefs['no-password-on-add'];
   document.getElementById('no-password-on-unlock').checked = prefs['no-password-on-unlock'];
-  document.getElementById('timeout').value = prefs.timeout;
-  document.getElementById('unlock-periods').value = prefs['unlock-periods'].join(', ');
-  rebuildUnlockDefault(String(prefs['unlock-default']));
+  setUnlock(prefs['unlock-default']);
   setIdle(prefs['idle-lock']);
   document.getElementById('close').value = prefs.close;
   document.getElementById('wrong').value = prefs.wrong;
@@ -399,14 +391,6 @@ document.addEventListener('click', e => {
       periods.push(-1);
     }
 
-    const unlockPeriods = [...new Set(document.getElementById('unlock-periods').value.split(/\s*,\s*/)
-      .map(Number).filter(n => Number.isFinite(n) && n > 0))].sort((a, b) => a - b);
-    if (unlockPeriods.length === 0) {
-      unlockPeriods.push(1, 5, 15, 60);
-    }
-    const udv = document.querySelector('#unlock-default input:checked')?.value;
-    const unlockDefault = (udv === 'tab' || udv === 'session') ? udv : Math.max(Number(udv) || 1, 1);
-
     grant(async () => {
       let schedule = {
         times: days.reduce((p, c) => {
@@ -469,7 +453,6 @@ document.addEventListener('click', e => {
       chrome.storage.local.remove('password');
       chrome.storage.local.set({
         sha256,
-        'title': document.getElementById('title').checked,
         'initialBlock': document.getElementById('initialBlock').checked,
         'initialBlockCurrent': document.getElementById('initialBlockCurrent').checked,
         'disable-actions-options': document.getElementById('disable-actions-options').checked,
@@ -483,9 +466,7 @@ document.addEventListener('click', e => {
         'redirect': document.getElementById('redirect').value,
         'message': document.getElementById('message').value,
         'css': document.getElementById('css').value,
-        'timeout': Math.max(Number(document.getElementById('timeout').value), 1),
-        'unlock-periods': unlockPeriods,
-        'unlock-default': unlockDefault,
+        'unlock-default': getUnlock(),
         'idle-lock': getIdle(),
         'close': Math.max(Number(document.getElementById('close').value), 0),
         'wrong': Math.max(Number(document.getElementById('wrong').value), 1),
@@ -746,3 +727,34 @@ document.getElementById('remove-all').onclick = () => {
     }
   }
 };
+
+/* settings pages: one section[data-page] is visible at a time, chosen by the location hash.
+   Hashes look like "#/lock" so they never match an element id (the schedule form is #schedule).
+   #/sites is the default */
+{
+  const pages = [...document.querySelectorAll('section[data-page]')];
+  const tabs = [...document.querySelectorAll('nav [data-nav]')];
+
+  const show = () => {
+    const name = location.hash.replace(/^#\/?/, '');
+    const page = pages.some(s => s.dataset.page === name) ? name : pages[0].dataset.page;
+    for (const s of pages) {
+      s.hidden = s.dataset.page !== page;
+    }
+    for (const a of tabs) {
+      if (a.dataset.nav === page) {
+        a.setAttribute('aria-current', 'page');
+      }
+      else {
+        a.removeAttribute('aria-current');
+      }
+    }
+    window.scrollTo(0, 0); // every page starts at its top
+  };
+  window.addEventListener('hashchange', show);
+  show();
+}
+
+document.getElementById('intro-dismiss').addEventListener('click', () => {
+  document.getElementById('intro').hidden = true;
+});
