@@ -19,6 +19,7 @@
   --accent-fg: light-dark(#ffffff, #120f2e);
   --accent-soft: light-dark(#efedff, #211e3d);
   --danger: light-dark(#c8341f, #ff8f80);
+  --lock: #e11d48; /* the "locked" red of the lock badge and the blocked toolbar icon */
   --danger-soft: light-dark(#fdeeec, #3b1f1c);
   --warning-soft: light-dark(#fff8e6, #2f2814);
   --warning-border: light-dark(#f1d68f, #5e5124);

@@ -46,6 +46,52 @@ if (args.has('url')) {
   document.querySelector('.path').hidden = (o.pathname === '/' || !o.pathname) && !o.search;
 }
 
+/* the site's icon with a lock badge, on the page and on the tab. The worker
+   keeps a copy of each blocked site's icon (see "favicon:<host>"), so nothing
+   is fetched from the site. Without one, Chrome's local favicon cache or the
+   first letter is used */
+{
+  const img = document.getElementById('favicon');
+  const domain = document.getElementById('domain').textContent;
+  document.getElementById('monogram').textContent = (domain.match(/[a-z0-9]/i) || ['?'])[0].toUpperCase();
+
+  // the tab icon: the site icon with the toolbar's "blocked" icon in its corner
+  const tabIcon = () => {
+    const badge = new Image();
+    badge.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = c.height = 32;
+      const g = c.getContext('2d');
+      g.drawImage(img, 0, 0, 28, 28);
+      g.drawImage(badge, 16, 16, 16, 16);
+      document.getElementById('tab-icon').href = c.toDataURL('image/png');
+    };
+    badge.src = '/data/icons/blocked/16.png';
+  };
+  const show = src => {
+    img.onload = () => {
+      img.hidden = false;
+      document.getElementById('monogram').hidden = true;
+      tabIcon();
+    };
+    img.src = src;
+  };
+
+  try {
+    const key = 'favicon:' + new URL(href).hostname.replace(/^www\./, '');
+    chrome.storage.local.get(key, prefs => {
+      if (prefs[key]) {
+        show(prefs[key]);
+      }
+      else if (navigator.userAgent.includes('Firefox') === false) {
+        // Chrome's _favicon endpoint reads the browser's own cache (needs the "favicon" permission)
+        show(chrome.runtime.getURL('/_favicon/?size=64&pageUrl=' + encodeURIComponent(href)));
+      }
+    });
+  }
+  catch (e) {} // no usable URL: the first letter stays
+}
+
 // the unlock behavior comes from the settings page ("Lock"). The lock
 // screen only asks for the password and says what will happen; the worker
 // picks the unlock mode from the same setting.
@@ -83,11 +129,27 @@ document.addEventListener('submit', e => {
     method: 'open-once',
     host: unlockHost,
     password: e.target.querySelector('[type=password]')?.value || ''
-  }, b => {
-    if (b) {
+  }, r => {
+    if (r === true) {
       document.getElementById('url').click();
     }
+    else {
+      showError(r?.error);
+    }
   });
+});
+
+// a wrong password shows here and shakes the field, no desktop notification
+const showError = msg => {
+  const field = document.querySelector('.field');
+  document.getElementById('error').textContent = msg || chrome.i18n.getMessage('bg_msg_2');
+  field.classList.remove('shake');
+  void field.offsetWidth; // restart the animation
+  field.classList.add('shake');
+  password.select();
+};
+password.addEventListener('input', () => {
+  document.getElementById('error').textContent = '';
 });
 
 // theme toggle: flips whatever is showing now (the system theme by default)
@@ -99,17 +161,6 @@ document.getElementById('switch').addEventListener('click', () => {
   root.classList.toggle('dark', !dark);
   root.classList.toggle('light', dark);
 });
-document.getElementById('options').addEventListener('click', e => {
-  e.stopPropagation();
-
-  if (chrome.extension.inIncognitoContext) {
-    toast.notify(chrome.i18n.getMessage('bg_msg_29'));
-    return;
-  }
-
-  chrome.runtime.openOptionsPage();
-});
-
 // storage
 Promise.all([
   new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve)),
@@ -177,10 +228,6 @@ Promise.all([
       }
     }, 1000);
   }
-  //
-  document.getElementById('exception').textContent = chrome.i18n.getMessage(
-    prefs.reverse ? 'blocked_add_to_whitelist' : 'blocked_remove_blocking'
-  );
   document.getElementById('exception').addEventListener('click', e => {
     e.stopPropagation();
 
@@ -251,11 +298,11 @@ Promise.all([
         method: 'check-password',
         password: password.value
       }, resp => {
-        if (resp) {
+        if (resp === true) {
           next();
         }
         else {
-          return password.focus();
+          showError(resp?.error);
         }
       });
     }

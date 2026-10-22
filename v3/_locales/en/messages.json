@@ -171,7 +171,7 @@
     "message": "Do not ask for the master password to block a new hostname"
   },
   "options_no_pass_on_unlock": {
-    "message": "Do not ask for the master password to temporarily unlock a blocked page"
+    "message": "Unlock without the password (reminder mode)"
   },
   "options_disable_actions_options": {
     "message": "Block context menu on this page"
@@ -239,9 +239,6 @@
   "options_manual_pause": {
     "message": "Forever"
   },
-  "popup_options_page": {
-    "message": "Options Page"
-  },
   "popup_filter": {
     "message": "Filter blocked sites…"
   },
@@ -286,18 +283,6 @@
   },
   "blocked_unlock": {
     "message": "Unlock"
-  },
-  "blocked_options": {
-    "message": "Options Page"
-  },
-  "blocked_rate": {
-    "message": "Rate Me"
-  },
-  "blocked_remove_blocking": {
-    "message": "Remove Blocking"
-  },
-  "blocked_add_to_whitelist": {
-    "message": "Add to Whitelist"
   },
   "blocked_paste": {
     "message": "Paste is not accepted. Type the password instead."
@@ -422,9 +407,6 @@
   "options_idle_lock": {
     "message": "Lock every unlocked site again after this much idle time (no keyboard or mouse input). This includes \"While tab is open\" unlocks."
   },
-  "options_idle_custom": {
-    "message": "Custom (minutes)"
-  },
   "popup_lock_now": {
     "message": "Lock all now"
   },
@@ -500,9 +482,6 @@
   "popup_autolock_off": {
     "message": "Auto-lock: off"
   },
-  "blocked_locked_title": {
-    "message": "This site is locked"
-  },
   "blocked_info_for": {
     "message": "Unlocks for ##"
   },
@@ -514,5 +493,20 @@
   },
   "blocked_info_idle": {
     "message": "Locks again after ## min idle"
+  },
+  "options_no_pass_on_unlock_hint": {
+    "message": "The lock screen opens the site with one click and no password. Good for focus blocking, not for privacy. Settings and removing sites still need the password."
+  },
+  "choice_custom": {
+    "message": "Custom"
+  },
+  "custom_duration_ph": {
+    "message": "e.g. 1h 30m"
+  },
+  "custom_duration_help": {
+    "message": "Minutes, or hours and minutes: 90, 1h 30m, 1:30"
+  },
+  "custom_duration_invalid": {
+    "message": "Type minutes or hours, like 45, 2h or 1h 30m"
   }
 }

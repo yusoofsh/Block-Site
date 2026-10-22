@@ -203,18 +203,6 @@
   "blocked_restricted": {
     "message": "גישה מוגבלת"
   },
-  "blocked_options": {
-    "message": "עמוד אפשרויות"
-  },
-  "blocked_rate": {
-    "message": "דרגו אותנו"
-  },
-  "blocked_remove_blocking": {
-    "message": "הסרת החסימה"
-  },
-  "blocked_add_to_whitelist": {
-    "message": "הוספה לרשימה הלבנה"
-  },
   "bg_msg_1": {
     "message": "This tab doesn't have a valid URL"
   },

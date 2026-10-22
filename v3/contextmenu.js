@@ -211,7 +211,7 @@ Error: ${e.message}`);
     if (prefs.password || prefs.sha256) {
       prompt(translate('bg_msg_12')).then(password => {
         if (password) {
-          sha256.validate({password}, resolve, msg => notify(msg || translate('bg_msg_2')));
+          sha256.validate({password}, resolve, notify);
         }
       });
     }
@@ -278,7 +278,7 @@ Error: ${e.message}`);
     if (prefs.password || prefs.sha256) {
       prompt(translate('bg_msg_12')).then(password => {
         if (password) {
-          sha256.validate({password}, resolve, msg => notify(msg || translate('bg_msg_2')));
+          sha256.validate({password}, resolve, notify);
         }
       });
     }

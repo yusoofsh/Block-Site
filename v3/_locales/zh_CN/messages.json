@@ -125,15 +125,6 @@
   "blocked_restricted": {
     "message": "限制访问"
   },
-  "blocked_options": {
-    "message": "选项页面"
-  },
-  "blocked_remove_blocking": {
-    "message": "移除封锁"
-  },
-  "blocked_add_to_whitelist": {
-    "message": "加入白名单"
-  },
   "blocked_no_action": {
     "message": "管理员密码不正确。填写并重试。"
   },

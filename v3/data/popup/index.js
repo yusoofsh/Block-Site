@@ -6,7 +6,16 @@
   e[e.dataset.i18nValue || 'textContent'] = chrome.i18n.getMessage(e.dataset.i18n);
 });
 
-const send = o => new Promise(resolve => chrome.runtime.sendMessage(o, resolve));
+// the worker answers {error} when a password was wrong: show it and resolve false
+const send = o => new Promise(resolve => chrome.runtime.sendMessage(o, r => {
+  if (r?.error) {
+    showError(r.error);
+    resolve(false);
+  }
+  else {
+    resolve(r);
+  }
+}));
 
 const modeBtn = document.getElementById('mode');
 let domainMode = true; // kept in sync with the persisted 'popup-domain' pref
@@ -101,16 +110,35 @@ const domainFor = url => {
   }
 };
 
+// show a worker error (like a wrong password) in the banner for a few seconds
+let errorTimer = 0;
+let bannerText = '';
+const showError = message => {
+  const banner = document.getElementById('warning');
+  if (banner.classList.contains('error') === false) {
+    bannerText = banner.textContent; // what to restore, if any
+  }
+  banner.textContent = message;
+  banner.classList.add('error');
+  clearTimeout(errorTimer);
+  errorTimer = setTimeout(() => {
+    banner.classList.remove('error');
+    banner.textContent = bannerText;
+  }, 3000);
+};
+
 // block the current URL or, in domain mode, the whole registrable domain
 // (convert() compiles a bare domain into a regex that matches the domain,
 // all its subdomains and every path)
-const blockCurrent = () => {
+const blockCurrent = async () => {
   const {url} = effective();
   const host = domainMode ? domainFor(url) : ruleForUrl(url);
   if (!host) {
     return;
   }
-  chrome.runtime.sendMessage({method: 'block-host', host, tabId: currentTab.id}, () => window.close());
+  if (await send({method: 'block-host', host, tabId: currentTab.id})) {
+    window.close();
+  }
 };
 
 // permanently unblock the current URL or, in domain mode, every rule of its
@@ -252,11 +280,6 @@ document.getElementById('filter').addEventListener('input', render);
 // toggle URL/domain mode; persist first, then re-render so all labels follow
 modeBtn.addEventListener('click', () => {
   chrome.storage.local.set({'popup-domain': !domainMode}, () => render());
-});
-document.getElementById('options').addEventListener('click', e => {
-  e.preventDefault();
-  chrome.runtime.openOptionsPage();
-  window.close();
 });
 
 // keep the list fresh if rules change while the popup is open

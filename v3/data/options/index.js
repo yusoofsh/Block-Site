@@ -191,18 +191,38 @@ fs.clean = (wipe = false) => {
   }
 };
 
+// the master password was accepted: Save, export and import are enabled and need no second prompt
+let unlocked = false;
+const setUnlocked = on => {
+  unlocked = on;
+  document.querySelector('[data-cmd="unlock"]').disabled = on;
+  for (const cmd of ['save', 'export', 'import-json']) {
+    document.querySelector(`[data-cmd="${cmd}"]`).disabled = !on;
+  }
+};
+// the worker answers true, or {error} (wrong password, lockout)
+const denied = resp => toast(resp?.error || chrome.i18n.getMessage('bg_msg_2'), 3000, 'error');
+
 // double-check password; based on https://github.com/ray-lothian/Block-Site/issues/51
 const grant = callback => chrome.storage.local.get({
   'sha256': ''
 }, prefs => {
-  if (prefs.sha256) {
+  if (prefs.sha256 && unlocked === false) {
     chrome.runtime.sendMessage({
       method: 'ask-for-password'
     }, password => {
       chrome.runtime.sendMessage({
         method: 'check-password',
         password
-      }, resp => resp && callback());
+      }, resp => {
+        if (resp === true) {
+          setUnlocked(true);
+          callback();
+        }
+        else {
+          denied(resp);
+        }
+      });
     });
   }
   else {
@@ -225,31 +245,86 @@ const choice = (name, value, label, hint) => {
   return e;
 };
 
-// quick-select cards plus a number input for any other value: picking a card
-// fills the input (a named card like 'tab' clears it), typing a number checks
-// the matching card or none
+// minutes from "90", "1h", "1.5h", "2 hours", "45m", "1h 30m", "1h30", "1h30m" or "1:30" (h:mm);
+// whole minutes above zero, NaN for anything else
+const NUMBER = '(\\d+(?:\\.\\d+)?)';
+const HOURS_MINUTES = new RegExp(
+  `^(?:${NUMBER}\\s*(?:hours|hour|hrs|hr|h)\\s*)?(?:${NUMBER}\\s*(?:minutes|minute|mins|min|m)?)?$`
+);
+const parseDuration = text => {
+  // "1:30" reads as "1h30"
+  const t = String(text).trim().toLowerCase().replace(/^(\d+):([0-5]?\d)$/, '$1h$2');
+  const m = HOURS_MINUTES.exec(t);
+  if (!t || !m) {
+    return NaN;
+  }
+  return Math.round(Number(m[1] || 0) * 60 + Number(m[2] || 0)) || NaN;
+};
+
+// 90 -> "1h 30m", 45 -> "45m", 120 -> "2h"
+const formatDuration = minutes => {
+  const total = Math.max(1, Math.round(minutes));
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  return [h && h + 'h', m && m + 'm'].filter(Boolean).join(' ');
+};
+
+// quick-select cards plus a last "Custom" card. The custom row (a text field and a live line)
+// is only shown while that card is checked. Call it after the preset cards were added.
+// get() returns the minutes (or a named value like 'tab'), NaN when the custom text is invalid
 const presets = (box, custom) => {
-  const mark = value => {
-    for (const r of box.querySelectorAll('input')) {
-      r.checked = r.value === String(value);
+  const row = custom.closest('.row');
+  const live = row.querySelector('.live');
+  const invalidText = chrome.i18n.getMessage('custom_duration_invalid');
+  box.appendChild(choice(box.id, 'custom', chrome.i18n.getMessage('choice_custom')));
+
+  const refresh = () => {
+    const text = custom.value.trim();
+    const minutes = parseDuration(text);
+    const invalid = text !== '' && Number.isNaN(minutes);
+    row.hidden = box.querySelector('input:checked')?.value !== 'custom';
+    custom.setCustomValidity(invalid ? invalidText : '');
+    if (text === '') {
+      live.textContent = chrome.i18n.getMessage('custom_duration_help');
+    }
+    else {
+      live.textContent = invalid ? invalidText : humanDuration(minutes);
     }
   };
   box.addEventListener('change', e => {
-    custom.value = isNaN(e.target.value) ? '' : e.target.value;
+    refresh();
+    if (e.target.value === 'custom') {
+      custom.focus();
+    }
   });
-  custom.addEventListener('input', () => mark(custom.value === '' ? '' : Number(custom.value)));
+  custom.addEventListener('input', refresh);
+
   return {
-    get: () => box.querySelector('input:checked')?.value ?? custom.value,
+    get: () => {
+      const value = box.querySelector('input:checked')?.value;
+      if (value === 'custom') {
+        return parseDuration(custom.value);
+      }
+      return isNaN(value) ? value : Number(value);
+    },
+    // a preset checks its card, any other number checks Custom and fills the text field
     set: value => {
-      custom.value = isNaN(value) ? '' : value;
-      mark(value);
+      const radios = [...box.querySelectorAll('input')];
+      const radio = radios.find(r => r.value === String(value) && r.value !== 'custom');
+      (radio || radios.find(r => r.value === 'custom')).checked = true;
+      custom.value = radio ? '' : formatDuration(value);
+      refresh();
+    },
+    // bring the field into view, even when its page is not the visible one
+    focus: () => {
+      openPage(custom.closest('section[data-page]').dataset.page);
+      custom.focus();
     }
   };
 };
 
 // unlock duration: minutes, or 'tab' (while the tab is open) or 'session'
 const unlockBox = document.getElementById('unlock-default');
-const unlockCustom = document.getElementById('unlock-custom');
 for (const m of [1, 5, 15, 60]) {
   unlockBox.appendChild(choice('unlock-default', m, humanDuration(m)));
 }
@@ -259,21 +334,17 @@ for (const [value, label, hint] of [
 ]) {
   unlockBox.appendChild(choice('unlock-default', value, chrome.i18n.getMessage(label), chrome.i18n.getMessage(hint)));
 }
+const unlock = presets(unlockBox, document.getElementById('unlock-custom'));
 // minutes are at least 1, 'tab' and 'session' pass through
-const unlockValue = value => isNaN(value) ? value : Math.max(Number(value) || 1, 1);
-const unlock = presets(unlockBox, unlockCustom);
-const getUnlock = () => unlockValue(unlock.get());
-const setUnlock = value => unlock.set(unlockValue(value));
+const setUnlock = value => unlock.set(isNaN(value) ? value : Math.max(Number(value) || 1, 1));
 
-// auto-lock: minutes of inactivity, 0 = off
+// auto-lock: minutes of inactivity, 0 = off (the Off card)
 const idleBox = document.getElementById('idle-lock');
-const idleCustom = document.getElementById('idle-custom');
 for (const m of [0, 1, 5, 15, 30, 60]) {
   const label = m ? chrome.i18n.getMessage('idle_min').replace('##', m) : chrome.i18n.getMessage('idle_off');
   idleBox.appendChild(choice('idle-lock', m, label));
 }
-const idle = presets(idleBox, idleCustom);
-const getIdle = () => Math.max(0, Number(idle.get()) || 0);
+const idle = presets(idleBox, document.getElementById('idle-custom'));
 const setIdle = minutes => idle.set(Math.max(0, Number(minutes) || 0));
 
 const init = (table = true) => chrome.storage.local.get(DEFAULTS, ps => {
@@ -322,10 +393,7 @@ const init = (table = true) => chrome.storage.local.get(DEFAULTS, ps => {
   document.getElementById('contextmenu-top').checked = prefs['contextmenu-top'];
 
   const safe = prefs.password !== '' || prefs.sha256 !== '';
-  document.querySelector('[data-cmd=unlock]').disabled = safe === false;
-  document.querySelector('[data-cmd="save"]').disabled = safe;
-  document.querySelector('[data-cmd="export"]').disabled = safe;
-  document.querySelector('[data-cmd="import-json"]').disabled = safe;
+  setUnlocked(safe === false);
   document.getElementById('rules').textContent = '';
   for (const rule of Object.keys(prefs.schedules)) {
     const option = document.createElement('option');
@@ -362,11 +430,11 @@ document.getElementById('save-container').onsubmit = e => {
     method: 'check-password',
     password
   }, resp => {
-    document.querySelector('[data-cmd="unlock"]').disabled = resp;
-    document.querySelector('[data-cmd="save"]').disabled = !resp;
-    document.querySelector('[data-cmd="export"]').disabled = !resp;
-    document.querySelector('[data-cmd="import-json"]').disabled = !resp;
-    if (!resp) {
+    if (resp === true) {
+      setUnlocked(true);
+    }
+    else {
+      denied(resp);
       document.getElementById('password').focus();
     }
   });
@@ -382,6 +450,11 @@ document.addEventListener('click', e => {
     target.closest('div').classList.toggle('note');
   }
   else if (cmd === 'save') {
+    const invalid = [unlock, idle].find(group => Number.isNaN(group.get()));
+    if (invalid) {
+      invalid.focus();
+      return toast(chrome.i18n.getMessage('custom_duration_invalid'), 3000, 'error');
+    }
     const sp = document.getElementById('pause-periods').value.split(/\s*,\s*/);
 
     const periods = sp.map(Number).filter(n => isNaN(n) === false && n > 0).filter((n, i, l) => l.indexOf(n) == i);
@@ -466,8 +539,8 @@ document.addEventListener('click', e => {
         'redirect': document.getElementById('redirect').value,
         'message': document.getElementById('message').value,
         'css': document.getElementById('css').value,
-        'unlock-default': getUnlock(),
-        'idle-lock': getIdle(),
+        'unlock-default': unlock.get(),
+        'idle-lock': idle.get(),
         'close': Math.max(Number(document.getElementById('close').value), 0),
         'wrong': Math.max(Number(document.getElementById('wrong').value), 1),
         schedule,
@@ -731,29 +804,32 @@ document.getElementById('remove-all').onclick = () => {
 /* settings pages: one section[data-page] is visible at a time, chosen by the location hash.
    Hashes look like "#/lock" so they never match an element id (the schedule form is #schedule).
    #/sites is the default */
-{
+const showPage = () => {
   const pages = [...document.querySelectorAll('section[data-page]')];
-  const tabs = [...document.querySelectorAll('nav [data-nav]')];
-
-  const show = () => {
-    const name = location.hash.replace(/^#\/?/, '');
-    const page = pages.some(s => s.dataset.page === name) ? name : pages[0].dataset.page;
-    for (const s of pages) {
-      s.hidden = s.dataset.page !== page;
+  const name = location.hash.replace(/^#\/?/, '');
+  const page = pages.some(s => s.dataset.page === name) ? name : pages[0].dataset.page;
+  for (const s of pages) {
+    s.hidden = s.dataset.page !== page;
+  }
+  for (const a of document.querySelectorAll('nav [data-nav]')) {
+    if (a.dataset.nav === page) {
+      a.setAttribute('aria-current', 'page');
     }
-    for (const a of tabs) {
-      if (a.dataset.nav === page) {
-        a.setAttribute('aria-current', 'page');
-      }
-      else {
-        a.removeAttribute('aria-current');
-      }
+    else {
+      a.removeAttribute('aria-current');
     }
-    window.scrollTo(0, 0); // every page starts at its top
-  };
-  window.addEventListener('hashchange', show);
-  show();
-}
+  }
+  window.scrollTo(0, 0); // every page starts at its top
+};
+// go to a page from code (pushState does not fire hashchange)
+const openPage = name => {
+  if (location.hash !== '#/' + name) {
+    history.pushState(null, '', '#/' + name);
+  }
+  showPage();
+};
+window.addEventListener('hashchange', showPage);
+showPage();
 
 document.getElementById('intro-dismiss').addEventListener('click', () => {
   document.getElementById('intro').hidden = true;

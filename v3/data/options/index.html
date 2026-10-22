@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Block Site :: Options page</title>
+  <link rel="icon" type="image/png" href="/data/icons/32.png">
   <link rel="stylesheet" href="/data/theme.css">
   <link rel="stylesheet" href="index.css">
 </head>
@@ -150,9 +151,10 @@
                 </div>
                 <div class="choices" id="unlock-default" role="radiogroup" aria-labelledby="unlock-default-label"></div>
               </div>
-              <div class="row">
-                <label class="label" for="unlock-custom"><b data-i18n="options_idle_custom"></b></label>
-                <input type="number" id="unlock-custom" min="1" step="any">
+              <div class="row custom" hidden>
+                <label class="label" for="unlock-custom"><b data-i18n="choice_custom"></b></label>
+                <input type="text" id="unlock-custom" autocomplete="off" spellcheck="false" data-i18n="custom_duration_ph" data-i18n-value="placeholder">
+                <small class="live" aria-live="polite"></small>
               </div>
             </div>
           </div>
@@ -166,9 +168,10 @@
                 <div class="label"><small data-i18n="options_idle_lock"></small></div>
                 <div class="choices compact" id="idle-lock" role="radiogroup" aria-labelledby="idle-header"></div>
               </div>
-              <div class="row">
-                <label class="label" for="idle-custom"><b data-i18n="options_idle_custom"></b></label>
-                <input type="number" id="idle-custom" min="0" step="any">
+              <div class="row custom" hidden>
+                <label class="label" for="idle-custom"><b data-i18n="choice_custom"></b></label>
+                <input type="text" id="idle-custom" autocomplete="off" spellcheck="false" data-i18n="custom_duration_ph" data-i18n-value="placeholder">
+                <small class="live" aria-live="polite"></small>
               </div>
             </div>
           </div>
@@ -183,7 +186,10 @@
                 <input type="checkbox" class="toggle" id="no-password-on-add">
               </div>
               <div class="row">
-                <label class="label" for="no-password-on-unlock"><b data-i18n="options_no_pass_on_unlock"></b></label>
+                <label class="label" for="no-password-on-unlock">
+                  <b data-i18n="options_no_pass_on_unlock"></b>
+                  <small data-i18n="options_no_pass_on_unlock_hint"></small>
+                </label>
                 <input type="checkbox" class="toggle" id="no-password-on-unlock">
               </div>
               <div class="row">

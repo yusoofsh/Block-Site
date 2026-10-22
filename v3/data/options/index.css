@@ -224,6 +224,16 @@ td {
 label.label[for] {
   cursor: pointer;
 }
+.row.custom .live {
+  flex: 1 0 100%;
+  margin-top: -6px;
+  font-size: 12.5px;
+  color: var(--muted);
+  text-align: end;
+}
+.row.custom input:invalid ~ .live {
+  color: var(--danger);
+}
 .row.sub {
   padding-inline-start: 42px;
 }
@@ -337,12 +347,13 @@ input:invalid {
   gap: 8px 10px;
 }
 #schedule-helper > .days {
-  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
   margin: 14px 0;
 }
 #schedule-helper > .days .card {
-  align-items: center;
-  padding: 7px 8px;
+  padding: 6px 14px;
 }
 #schedule-helper > div:last-of-type {
   display: flex;
@@ -472,9 +483,6 @@ input:invalid {
   }
   #schedule > div {
     gap: 8px 6px;
-  }
-  #schedule-helper > .days {
-    grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
   }
   #unlock-default {
     grid-template-columns: repeat(2, minmax(0, 1fr));

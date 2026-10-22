@@ -221,18 +221,6 @@
   "blocked_restricted": {
     "message": "Ограниченный доступ"
   },
-  "blocked_options": {
-    "message": "Страница параметров"
-  },
-  "blocked_rate": {
-    "message": "Оцените меня"
-  },
-  "blocked_remove_blocking": {
-    "message": "Убрать блокировку"
-  },
-  "blocked_add_to_whitelist": {
-    "message": "Добавить в белый список"
-  },
   "blocked_paste": {
     "message": "Вставка не принимается. Вместо этого введите пароль."
   },

@@ -212,18 +212,6 @@
   "blocked_restricted": {
     "message": "Sınırlı Erişim"
   },
-  "blocked_options": {
-    "message": "Seçenekler Sayfası"
-  },
-  "blocked_rate": {
-    "message": "Beni derecelendir"
-  },
-  "blocked_remove_blocking": {
-    "message": "Engellemeyi Kaldır"
-  },
-  "blocked_add_to_whitelist": {
-    "message": "Beyaz Listeye Ekle"
-  },
   "blocked_paste": {
     "message": "Yapıştırma kabul edilmiyor. Bunun yerine şifreyi yazın."
   },

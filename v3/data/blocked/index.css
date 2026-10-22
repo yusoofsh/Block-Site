@@ -35,23 +35,41 @@ main {
   text-align: center;
 }
 
-.badge {
+.site-icon {
+  position: relative;
   display: grid;
   place-items: center;
-  width: 64px;
-  height: 64px;
-  border-radius: 20px;
-  color: var(--accent);
+  width: 72px;
+  height: 72px;
+  margin-bottom: 20px;
+  border-radius: 22px;
   background: var(--surface);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-lg);
 }
-
-.eyebrow {
-  margin: 22px 0 6px;
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 500;
+#favicon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: contain;
+}
+#monogram {
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.lock-badge {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--lock);
+  box-shadow: 0 0 0 3px var(--bg);
 }
 
 h1 {
@@ -148,29 +166,35 @@ form {
   border-radius: 10px;
 }
 
+#error {
+  margin: 12px 0 0;
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 500;
+}
+#error:empty {
+  display: none;
+}
+.shake {
+  animation: shake 0.36s;
+}
+@keyframes shake {
+  20%,
+  60% {
+    transform: translateX(-6px);
+  }
+  40%,
+  80% {
+    transform: translateX(6px);
+  }
+}
+
 #info {
   margin: 14px 0 0;
   color: var(--muted);
   font-size: 12.5px;
 }
 #info:empty {
-  display: none;
-}
-
-footer {
-  display: flex;
-  gap: 18px;
-  font-size: 13px;
-}
-footer a {
-  color: var(--muted);
-}
-footer a:hover {
-  color: var(--accent);
-}
-/* removing a rule now lives on the settings page and in the toolbar popup */
-#exception,
-#rate[data-hide=true] {
   display: none;
 }
 
@@ -192,20 +216,17 @@ footer a:hover {
 html.simple main {
   padding: 12px;
 }
-html.simple .badge {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
+html.simple .site-icon {
+  width: 52px;
+  height: 52px;
+  margin-bottom: 10px;
+  border-radius: 16px;
   box-shadow: none;
 }
 html.simple h1 {
   font-size: 17px;
 }
-html.simple .eyebrow {
-  margin-top: 10px;
-}
 html.simple form,
-html.simple footer,
 html.simple #switch {
   display: none !important;
 }

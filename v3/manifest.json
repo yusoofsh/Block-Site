@@ -14,7 +14,8 @@
     "alarms",
     "contextMenus",
     "declarativeNetRequestWithHostAccess",
-    "idle"
+    "idle",
+    "favicon"
   ],
   "host_permissions": [
     "<all_urls>"

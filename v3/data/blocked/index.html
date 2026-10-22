@@ -8,20 +8,23 @@
   <title data-i18n="blocked_restricted"></title>
   <script type="text/javascript" src="pre.js"></script>
   <style type="text/css" id="css"></style>
-  <link rel="icon" type="image/png" href="/data/icons/32.png">
+  <link rel="icon" type="image/png" href="/data/icons/blocked/32.png" id="tab-icon">
 </head>
 <body>
   <main>
     <div class="lock">
-      <div class="badge" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8"
-          stroke-linecap="round" stroke-linejoin="round">
-          <rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/>
-          <path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/>
-          <circle cx="12" cy="15.5" r="1.1" fill="currentColor"/>
-        </svg>
+      <!-- the locked site's icon (or its first letter) with a lock badge -->
+      <div class="site-icon" aria-hidden="true">
+        <img id="favicon" alt="" hidden>
+        <span id="monogram"></span>
+        <span class="lock-badge">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.6"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="5" y="11" width="14" height="10" rx="2.5" fill="currentColor"/>
+            <path d="M8 11V8a4 4 0 0 1 8 0v3"/>
+          </svg>
+        </span>
       </div>
-      <p class="eyebrow" data-i18n="blocked_locked_title"></p>
       <h1>
         <a id="url" href="">
           <span id="sub-domain"></span><span id="domain">...</span>
@@ -40,15 +43,12 @@
               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
           </button>
         </div>
+        <p id="error" role="alert"></p>
         <p id="info"></p>
       </form>
     </div>
-
-    <footer>
-      <a href="#" id="options" data-i18n="blocked_options"></a>
-      <a href="#" id="rate" data-i18n="blocked_rate" data-hide=true>-</a>
-      <a href="#" id="exception">-</a>
-    </footer>
+    <!-- "remove blocking", pressed by the toolbar button on this page; not shown -->
+    <a href="#" id="exception" hidden></a>
   </main>
 
   <notification-view id="toast"></notification-view>
@@ -64,6 +64,5 @@
   <script src="/utils.js"></script>
   <script src="tld.js"></script>
   <script src="index.js"></script>
-  <script src="rate.js"></script>
 </body>
 </html>

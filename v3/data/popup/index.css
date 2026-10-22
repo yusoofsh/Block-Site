@@ -36,20 +36,18 @@ body {
 }
 #actions {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 8px;
   padding: 0 16px 14px;
 }
-#mode,
-#options {
+#mode {
   padding: 7px 10px;
   font-size: 12px;
   font-weight: 500;
   color: var(--muted);
   background: transparent;
 }
-#mode:hover:not(:disabled),
-#options:hover {
+#mode:hover:not(:disabled) {
   color: var(--fg);
   background: var(--surface-2);
 }
@@ -130,6 +128,11 @@ body {
 }
 .site:hover {
   background: var(--surface-2);
+}
+.warning.error {
+  color: var(--danger);
+  background: var(--danger-soft);
+  border-bottom-color: var(--danger);
 }
 .warning {
   text-align: center;

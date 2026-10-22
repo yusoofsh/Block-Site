@@ -215,9 +215,6 @@
   "options_popup": {
     "message": "Beim Klick auf das Symbol in der Symbolleiste eine Übersicht der gesperrten Seiten anzeigen (sonst sperrt ein Klick die aktuelle Seite)"
   },
-  "popup_options_page": {
-    "message": "Einstellungsseite"
-  },
   "popup_filter": {
     "message": "Gesperrte Seiten filtern…"
   },
@@ -274,18 +271,6 @@
   },
   "blocked_unlock": {
     "message": "Freigeben"
-  },
-  "blocked_options": {
-    "message": "Einstellungen"
-  },
-  "blocked_rate": {
-    "message": "Bewerten Sie uns"
-  },
-  "blocked_remove_blocking": {
-    "message": "Blockade entfernen"
-  },
-  "blocked_add_to_whitelist": {
-    "message": "Zur Positivliste hinzufügen"
   },
   "blocked_paste": {
     "message": "Einfügen ist nicht erlaubt. Bitte tippen Sie das Passwort ein."
