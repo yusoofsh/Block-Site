@@ -1,4 +1,4 @@
-/* global convert, notify, translate, resume */
+/* global convert, notify, translate, resume, ruleRegExp, relock */
 
 // a plausible URL that a block pattern would match, used to tell whether a
 // temporary "open once" allow rule still shadows a currently-blocked site
@@ -217,18 +217,10 @@ const update = async () => {
       if (allows.length) {
         const samples = hss.map(sampleUrl).filter(Boolean);
         const stale = allows.filter(rule => {
-          let re;
-          try {
-            re = new RegExp(rule.condition.regexFilter, 'i');
-          }
-          catch (e) {
-            return false;
-          }
-          return samples.some(u => re.test(u)) === false;
+          const re = ruleRegExp(rule);
+          return re && samples.some(u => re.test(u)) === false;
         }).map(r => r.id);
-        if (stale.length) {
-          await chrome.declarativeNetRequest.updateSessionRules({removeRuleIds: stale});
-        }
+        await relock(stale, {reload: false});
       }
     }
 

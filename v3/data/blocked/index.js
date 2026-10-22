@@ -1,4 +1,4 @@
-/* global tld, getRelativeTime, humanDuration */
+/* global tld, humanDuration */
 'use strict';
 
 const toast = document.getElementById('toast');
@@ -29,16 +29,6 @@ const args = new URLSearchParams(location.search);
 // "type=ipb" sends URIEncoded
 const href = /&url=\w+:\/\//.test(location.search) ? location.search.split('&url=')[1] : args.get('url');
 
-if (args.has('date')) {
-  let d = new Date(parseInt(args.get('date')));
-  if (isNaN(d)) {
-    d = new Date();
-    document.getElementById('date').textContent = d.toLocaleString();
-  }
-  else {
-    document.getElementById('date').textContent = getRelativeTime(d);
-  }
-}
 if (args.has('url')) {
   const o = new URL(href);
   o.domain = tld.getDomain(o.host);
@@ -51,43 +41,79 @@ if (args.has('url')) {
   else {
     document.getElementById('domain').textContent = o.host;
   }
-  document.getElementById('pathname').textContent = o.pathname;
+  document.getElementById('pathname').textContent = o.pathname === '/' ? '' : o.pathname;
   document.getElementById('search').textContent = o.search;
+  document.querySelector('.path').hidden = (o.pathname === '/' || !o.pathname) && !o.search;
 }
 
-// populate the "unlock duration" chooser
+/* the site's icon with a lock badge, on the page and on the tab. The worker
+   keeps a copy of each blocked site's icon (see "favicon:<host>"), so nothing
+   is fetched from the site. Without one, Chrome's local favicon cache or the
+   first letter is used */
 {
-  const sel = document.getElementById('duration');
-  chrome.storage.local.get({
-    'unlock-periods': [1, 5, 15, 60], // minutes
-    'unlock-default': 1, // minutes | 'tab' | 'session'
-    'timeout': 60 // seconds (legacy fallback)
-  }, prefs => {
-    const add = (value, label) => {
-      const o = document.createElement('option');
-      o.value = value;
-      o.textContent = label;
-      sel.appendChild(o);
-    };
-    const periods = [...prefs['unlock-periods']].filter(n => Number.isFinite(n) && n > 0);
-    if (typeof prefs['unlock-default'] === 'number' && periods.includes(prefs['unlock-default']) === false) {
-      periods.push(prefs['unlock-default']);
-    }
-    [...new Set(periods)].sort((a, b) => a - b).forEach(min => add('for:' + (min * 60), humanDuration(min)));
-    add('tab', chrome.i18n.getMessage('blocked_unlock_tab'));
-    add('session', chrome.i18n.getMessage('blocked_unlock_session'));
-    add('permanent', chrome.i18n.getMessage('blocked_unlock_permanent'));
+  const img = document.getElementById('favicon');
+  const domain = document.getElementById('domain').textContent;
+  document.getElementById('monogram').textContent = (domain.match(/[a-z0-9]/i) || ['?'])[0].toUpperCase();
 
-    const def = prefs['unlock-default'];
-    sel.value = (def === 'tab' || def === 'session') ? def : 'for:' + (Number(def) * 60);
-    if (sel.selectedIndex < 0) {
-      sel.value = 'for:' + prefs.timeout;
-    }
-    if (sel.selectedIndex < 0 && sel.options.length) {
-      sel.selectedIndex = 0;
-    }
-  });
+  // the tab icon: the site icon with the toolbar's "blocked" icon in its corner
+  const tabIcon = () => {
+    const badge = new Image();
+    badge.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = c.height = 32;
+      const g = c.getContext('2d');
+      g.drawImage(img, 0, 0, 28, 28);
+      g.drawImage(badge, 16, 16, 16, 16);
+      document.getElementById('tab-icon').href = c.toDataURL('image/png');
+    };
+    badge.src = '/data/icons/blocked/16.png';
+  };
+  const show = src => {
+    img.onload = () => {
+      img.hidden = false;
+      document.getElementById('monogram').hidden = true;
+      tabIcon();
+    };
+    img.src = src;
+  };
+
+  try {
+    const key = 'favicon:' + new URL(href).hostname.replace(/^www\./, '');
+    chrome.storage.local.get(key, prefs => {
+      if (prefs[key]) {
+        show(prefs[key]);
+      }
+      else if (navigator.userAgent.includes('Firefox') === false) {
+        // Chrome's _favicon endpoint reads the browser's own cache (needs the "favicon" permission)
+        show(chrome.runtime.getURL('/_favicon/?size=64&pageUrl=' + encodeURIComponent(href)));
+      }
+    });
+  }
+  catch (e) {} // no usable URL: the first letter stays
 }
+
+// the unlock behavior comes from the settings page ("Lock"). The lock
+// screen only asks for the password and says what will happen; the worker
+// picks the unlock mode from the same setting.
+chrome.storage.local.get({
+  'unlock-default': 1, // minutes | 'tab' | 'session'
+  'idle-lock': 0 // minutes, 0 = off
+}, prefs => {
+  const t = id => chrome.i18n.getMessage(id);
+  const def = prefs['unlock-default'];
+  const parts = [];
+  if (def === 'tab' || def === 'session') {
+    parts.push(t(def === 'tab' ? 'blocked_info_tab' : 'blocked_info_session'));
+  }
+  else if (Number(def) > 0) {
+    parts.push(t('blocked_info_for').replace('##', humanDuration(Number(def))));
+  }
+  const idle = Number(prefs['idle-lock']) || 0;
+  if (idle > 0) {
+    parts.push(t('blocked_info_idle').replace('##', idle));
+  }
+  document.getElementById('info').textContent = parts.join(' · ');
+});
 
 // the site (registrable domain, subdomains included) an unlock applies to
 let unlockHost = '';
@@ -99,59 +125,46 @@ catch (e) {}
 
 document.addEventListener('submit', e => {
   e.preventDefault();
-  const choice = document.getElementById('duration').value;
-  // "permanent" reuses the existing remove-blocking / add-to-whitelist logic
-  if (choice === 'permanent') {
-    document.getElementById('exception').click();
-    return;
-  }
-  let mode;
-  if (choice === 'tab' || choice === 'session') {
-    mode = {type: choice};
-  }
-  else {
-    mode = {type: 'for', seconds: parseInt(choice.split(':')[1], 10)};
-  }
   post({
     method: 'open-once',
     host: unlockHost,
-    mode,
     password: e.target.querySelector('[type=password]')?.value || ''
-  }, b => {
-    if (b) {
+  }, r => {
+    if (r === true) {
       document.getElementById('url').click();
+    }
+    else {
+      showError(r?.error);
     }
   });
 });
 
+// a wrong password shows here and shakes the field, no desktop notification
+const showError = msg => {
+  const field = document.querySelector('.field');
+  document.getElementById('error').textContent = msg || chrome.i18n.getMessage('bg_msg_2');
+  field.classList.remove('shake');
+  void field.offsetWidth; // restart the animation
+  field.classList.add('shake');
+  password.select();
+};
+password.addEventListener('input', () => {
+  document.getElementById('error').textContent = '';
+});
+
+// theme toggle: flips whatever is showing now (the system theme by default)
 document.getElementById('switch').addEventListener('click', () => {
-  const val = document.documentElement.classList.contains('dark') === false;
-  localStorage.setItem('dark', val);
-  document.documentElement.classList[val ? 'add' : 'remove']('dark');
+  const root = document.documentElement;
+  const dark = root.classList.contains('dark') ||
+    (root.classList.contains('light') === false && matchMedia('(prefers-color-scheme: dark)').matches);
+  localStorage.setItem('dark', !dark);
+  root.classList.toggle('dark', !dark);
+  root.classList.toggle('light', dark);
 });
-document.getElementById('options').addEventListener('click', e => {
-  e.stopPropagation();
-
-  if (chrome.extension.inIncognitoContext) {
-    toast.notify(chrome.i18n.getMessage('bg_msg_29'));
-    return;
-  }
-
-  chrome.runtime.openOptionsPage();
-});
-
-const title = () => fetch(href, {
-  credentials: 'omit'
-}).then(r => r.text()).then(content => {
-  const dom = new DOMParser().parseFromString(content, 'text/html');
-  document.getElementById('title').textContent = dom.title || 'Unknown';
-}).catch(() => document.getElementById('title').textContent = 'Unknown');
-
 // storage
 Promise.all([
   new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve)),
   chrome.storage.local.get({
-    'title': true,
     'close': 0,
     'message': '',
     'css': '',
@@ -168,9 +181,6 @@ Promise.all([
     return prefs;
   })
 ]).then(a => a[1]).then(prefs => {
-  if (prefs.title && href) {
-    title();
-  }
   // the master password is optional (https://github.com/ray-lothian/Block-Site/issues/42).
   const hasPassword = prefs.password || prefs.sha256;
   const unlockNeedsPassword = hasPassword && !prefs['no-password-on-unlock'];
@@ -188,17 +198,12 @@ Promise.all([
     const h = args.get('host');
     const o = prefs.notes[h] || {};
 
-    const ruleEl = document.getElementById('rule');
-    ruleEl.hidden = false;
-    document.getElementById('rule-label').hidden = false;
-    ruleEl.textContent = h;
-
     if (o.note) {
       document.getElementById('message').textContent = o.note;
     }
 
+    // the popup lists how often each rule blocked a page
     const count = (o.count || 0) + 1;
-    document.getElementById('counter').textContent = count;
     chrome.storage.local.set({
       notes: {
         ...prefs.notes,
@@ -223,10 +228,6 @@ Promise.all([
       }
     }, 1000);
   }
-  //
-  document.getElementById('exception').textContent = chrome.i18n.getMessage(
-    prefs.reverse ? 'blocked_add_to_whitelist' : 'blocked_remove_blocking'
-  );
   document.getElementById('exception').addEventListener('click', e => {
     e.stopPropagation();
 
@@ -297,11 +298,11 @@ Promise.all([
         method: 'check-password',
         password: password.value
       }, resp => {
-        if (resp) {
+        if (resp === true) {
           next();
         }
         else {
-          return password.focus();
+          showError(resp?.error);
         }
       });
     }

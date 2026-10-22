@@ -14,14 +14,8 @@
   "options_user_message": {
     "message": "用户信息："
   },
-  "options_resolve": {
-    "message": "解析被封锁网页的标题（取消该选项以免被封锁的服务器收到请求）"
-  },
   "options_startup": {
     "message": "初始化后封锁现存页面"
-  },
-  "options_allow_access": {
-    "message": "解除封锁后允许访问网址的时长（秒）"
   },
   "options_block_period": {
     "message": "多次输入错误密码后封锁密码核查（分钟）"
@@ -130,24 +124,6 @@
   },
   "blocked_restricted": {
     "message": "限制访问"
-  },
-  "blocked_title": {
-    "message": "标题"
-  },
-  "blocked_since": {
-    "message": "封锁开始时间"
-  },
-  "blocked_master_password": {
-    "message": "输入管理员密码以解除封锁"
-  },
-  "blocked_options": {
-    "message": "选项页面"
-  },
-  "blocked_remove_blocking": {
-    "message": "移除封锁"
-  },
-  "blocked_add_to_whitelist": {
-    "message": "加入白名单"
   },
   "blocked_no_action": {
     "message": "管理员密码不正确。填写并重试。"

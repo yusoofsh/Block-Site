@@ -1,3 +1,5 @@
+// desktop notifications are only for errors with no page to show them, such as
+// a wrong password in the toolbar prompt. Pages get the error in their response
 // eslint-disable-next-line no-unused-vars
 const notify = async message => {
   const prefs = await chrome.storage.local.get({

@@ -1,202 +1,232 @@
 html {
-  --bg: #e1e1e1;
-  --input-bg: #fff;
-  --fg: #4e4e4e;
-  --input-fg: #4e4e4e;
-  --a-fg: #006cc3;
-
   height: 100%;
-  color-scheme: light;
-}
-html.dark {
-  --bg: #222837;
-  --input-bg: #363c4b;
-  --fg: #c7c7c7;
-  --input-fg: #d0d0d0;
-  --a-fg: #90bbde;
-
-  color-scheme: darl;
 }
 
 body {
+  margin: 0;
+  min-height: 100%;
+  display: flex;
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--fg);
+  background:
+    radial-gradient(60rem 36rem at 50% -10%, var(--accent-soft), transparent 70%),
+    var(--bg);
+}
+
+main {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  margin: 0;
-  font-family: "Helvetica Neue", Helvetica, sans-serif;
-  font-size: 13px;
-  color: var(--fg);
-  background: var(--bg) url('images/blocked.svg') center center no-repeat;
-  background-size: min(80vw, 50vh);
-  height: 100%;
-}
-
-html.dark body {
-  background-blend-mode: luminosity;
-}
-
-@media screen and (max-height: 400px) {
-  html.complete body {
-    background-image: none !important;
-  }
-}
-
-header h1 {
-  text-align: center;
-  font-weight: normal;
-}
-header > div {
-  display: grid;
-  grid-template-columns: min-content 1fr;
-  grid-gap: 10px 30px;
-}
-header > div > span:nth-child(odd) {
-  white-space: nowrap;
-}
-header,
-footer,
-p {
-  padding: 10px;
-}
-#rate::after {
-  content: '•';
-  padding: 0 5px;
-}
-/* the "remove blocking" link is replaced by the "Permanent" unlock option */
-#exception {
-  display: none;
-}
-#rate[data-hide=true] {
-  display: none;
-}
-
-footer {
-  display: grid;
-  grid-template-columns: 1fr min-content;
   align-items: center;
-  grid-gap: 10px;
-}
-footer > div {
-  display: grid;
-  grid-template-columns: repeat(3, min-content);
-  justify-content: end;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-@media screen and (max-width: 600px) {
-  footer {
-    grid-template-columns: 1fr;
-  }
-}
-
-input[type=text],
-input[type=password] {
-  outline: none;
-  min-width: 150px;
-  color: var(--input-fg);
-  background-color: var(--input-bg);
-  border: none;
-  width: 50%;
+  justify-content: center;
+  gap: 40px;
+  padding: 48px 16px 32px;
   box-sizing: border-box;
-  padding: 10px;
 }
 
-footer input[type=password] {
+.lock {
   width: 100%;
-  box-sizing: border-box;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
-footer form {
-  gap: 8px;
+.site-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 20px;
+  border-radius: 22px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
 }
-footer form input[type=password] {
-  flex: 1;
-  width: auto;
-  min-width: 100px;
+#favicon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: contain;
 }
-footer #duration,
-footer input[type=submit] {
-  color: var(--input-fg);
-  background-color: var(--input-bg);
-  border: none;
-  padding: 10px;
-  box-sizing: border-box;
+#monogram {
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--accent);
 }
-footer input[type=submit] {
-  cursor: pointer;
+.lock-badge {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--lock);
+  box-shadow: 0 0 0 3px var(--bg);
+}
+
+h1 {
+  margin: 0;
+  max-width: 100%;
+  font-size: 26px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
 }
 
 a {
+  color: var(--accent);
   text-decoration: none;
-  color: var(--a-fg);
 }
 
 #url {
-  display: flex;
-  align-items: end;
-  flex-wrap: wrap;
+  display: block;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+#sub-domain {
+  color: var(--muted);
+}
+.path {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--muted);
   overflow: hidden;
-}
-#domain {
-  font-weight: bold;
-  font-size: 120%;
-}
-#sub-domain,
-#pathname,
-#search {
-  opacity: 0.7;
-}
-#search,
-#pathname {
   text-overflow: ellipsis;
-  overflow: hidden;
   white-space: nowrap;
-}
-#switch {
-  position: absolute;
-  top: 0;
-  right: 0;
-  background: url('images/button_on.svg') no-repeat center center;
-  background-size: 32px;
-  width: 64px;
-  height: 48px;
-  cursor: pointer;
-  border: none;
-  outline: none;
-}
-html.dark #switch {
-  background-image: url('images/button_off.svg');
 }
 
 #message {
-  white-space: pre;
-  overflow: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--input-bg) var(--bg);
+  margin: 18px 0 0;
+  padding: 12px 14px;
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  text-align: start;
+}
+#message:empty {
+  display: none;
 }
 
-[hbox] {
+form {
+  width: 100%;
+  margin-top: 28px;
+}
+
+/* one pill: the password input with the unlock button inside it */
+.field {
   display: flex;
-  flex-direction: row;
-}
-[vbox] {
-  display: flex;
-  flex-direction: column;
-}
-[flex="1"] {
-  flex: 1;
-}
-[align=center] {
   align-items: center;
+  gap: 6px;
+  padding: 5px;
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.field:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--focus), var(--shadow);
+}
+.field input[type=password] {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  box-shadow: none;
+}
+.field input[type=password]:focus-visible {
+  box-shadow: none;
+}
+.field input[type=password][hidden] + #unlock {
+  flex: 1;
+  justify-content: center;
+}
+#unlock {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 10px;
 }
 
-html.simple header h1,
-html.simple header table,
-html.simple footer {
-  display: none !important;
+#error {
+  margin: 12px 0 0;
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 500;
+}
+#error:empty {
+  display: none;
+}
+.shake {
+  animation: shake 0.36s;
+}
+@keyframes shake {
+  20%,
+  60% {
+    transform: translateX(-6px);
+  }
+  40%,
+  80% {
+    transform: translateX(6px);
+  }
+}
+
+#info {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+#info:empty {
+  display: none;
+}
+
+#switch {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  padding: 8px;
+  color: var(--muted);
 }
 
 #toast {
   z-index: 1;
+}
+
+/* "simple" mode: embedded frames and the optional minimal page view */
+html.simple main {
+  padding: 12px;
+}
+html.simple .site-icon {
+  width: 52px;
+  height: 52px;
+  margin-bottom: 10px;
+  border-radius: 16px;
+  box-shadow: none;
+}
+html.simple h1 {
+  font-size: 17px;
+}
+html.simple form,
+html.simple #switch {
+  display: none !important;
 }

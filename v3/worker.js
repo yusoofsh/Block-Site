@@ -7,7 +7,7 @@
   session rules (own id space, dropped automatically on browser restart):
     1-: temporary "open once" unlocks
 */
-/* global translate, notify, browser */
+/* global translate, notify, browser, idleWatch */
 
 /* imports */
 if (typeof importScripts !== 'undefined') {
@@ -49,6 +49,19 @@ convert.escape = str => {
   const regex = RegExp('[' + specials.join('\\') + ']', 'g');
   return str.replace(regex, '\\$&');
 };
+// temporary "open once" unlocks: the session ruleset's allow rules
+const getUnlocks = async () => (await chrome.declarativeNetRequest.getSessionRules())
+  .filter(r => r.action?.type === 'allow');
+// a case-insensitive RegExp, or null when the source does not compile
+const regExp = source => {
+  try {
+    return new RegExp(source, 'i');
+  }
+  catch (e) {
+    return null;
+  }
+};
+const ruleRegExp = rule => regExp(rule.condition.regexFilter);
 const sha256 = async (message = '') => {
   const msgBuffer = new TextEncoder('utf-8').encode(message);
   const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -85,7 +98,7 @@ sha256.validate = ({password}, resolve, reject) => chrome.storage.local.get({
       retries: prefs.retries
     });
 
-    reject();
+    reject(translate('bg_msg_2'));
   };
   const s = () => {
     chrome.storage.local.set({
@@ -114,6 +127,8 @@ sha256.validate = ({password}, resolve, reject) => chrome.storage.local.get({
     f();
   }
 });
+// answer a page's password-gated request: true on success, {error} to show on the page
+const failWith = response => msg => response({error: msg});
 
 /* user action */
 const userAction = async (tabId, href, frameId) => {
@@ -179,7 +194,7 @@ const userAction = async (tabId, href, frameId) => {
   if ((prefs.password || prefs.sha256) && prefs['no-password-on-add'] === false) {
     const password = await prompt(translate('bg_msg_17'));
     if (password) {
-      sha256.validate({password}, next, msg => notify(msg || translate('bg_msg_2')));
+      sha256.validate({password}, next, notify);
     }
   }
   else {
@@ -257,6 +272,7 @@ const openOnceImpl = async ({host, mode}) => {
     });
   }
   // 'tab' and 'session' modes need no per-id bookkeeping
+  await idleWatch(true);
 };
 // serialize unlock installs: id allocation reads getSessionRules() then writes,
 // so two concurrent unlocks could otherwise pick the same id and clobber each other
@@ -280,8 +296,7 @@ const tabUrl = url => {
 };
 // a "tab" unlock lives while any open tab still matches its rule; re-check on close
 chrome.tabs.onRemoved.addListener(async closedId => {
-  const unlocks = (await chrome.declarativeNetRequest.getSessionRules())
-    .filter(r => r.id < TAB_ID_MAX && r.action?.type === 'allow');
+  const unlocks = (await getUnlocks()).filter(r => r.id < TAB_ID_MAX);
   if (unlocks.length === 0) {
     return;
   }
@@ -290,21 +305,127 @@ chrome.tabs.onRemoved.addListener(async closedId => {
   const tabs = (await chrome.tabs.query({})).filter(t => t.id !== closedId);
   const urls = tabs.map(t => tabUrl(t.url)).filter(Boolean);
 
-  const remove = [];
-  for (const rule of unlocks) {
-    let re;
-    try {
-      re = new RegExp(rule.condition.regexFilter, 'i');
-    }
-    catch (e) {
-      continue;
-    }
-    if (urls.some(u => re.test(u)) === false) {
-      remove.push(rule.id);
+  const remove = unlocks.filter(rule => {
+    const re = ruleRegExp(rule);
+    return re && urls.some(u => re.test(u)) === false;
+  }).map(r => r.id);
+  // no reload: no open tab matches these rules any more
+  await relock(remove, {reload: false});
+});
+
+/* re-lock: drop temporary unlocks (all of them, or only `ids`). Every path
+   that ends an unlock goes through here: expiry, idle, "lock all", tab close
+   and the blocker's stale-rule prune.
+   With `reload` the open tabs they covered are reloaded, so the blocking
+   rules send them back to the lock screen. Without it an expired unlock
+   would leave its pages usable. Discarded tabs re-check on activation. */
+const relock = async (ids, {reload = true} = {}) => {
+  const unlocks = await getUnlocks();
+  const drop = ids ? unlocks.filter(r => ids.includes(r.id)) : unlocks;
+  if (drop.length === 0) {
+    return;
+  }
+  await chrome.declarativeNetRequest.updateSessionRules({removeRuleIds: drop.map(r => r.id)});
+  await Promise.all(drop.map(r => chrome.alarms.clear('release.once.' + r.id)));
+
+  if (reload) {
+    const res = drop.map(ruleRegExp).filter(Boolean);
+    for (const tab of await chrome.tabs.query({discarded: false, url: ['http://*/*', 'https://*/*']})) {
+      if (res.some(re => re.test(tab.url))) {
+        chrome.tabs.reload(tab.id);
+      }
     }
   }
-  if (remove.length) {
-    await chrome.declarativeNetRequest.updateSessionRules({removeRuleIds: remove});
+  await idleWatch(unlocks.length > drop.length);
+};
+
+/* site icons for the lock screen
+
+   The lock screen shows the locked site's own icon without contacting the
+   site. The icon is copied from an open tab instead: when the site gets
+   blocked while a tab shows it, and whenever an unlocked tab of it loads a
+   new icon. Each one is kept as a data: URL under "favicon:<host>" (the
+   hostname without "www."), so an edited rule keeps its icon and the lock
+   screen reads only its own key. Icons of hosts no rule blocks are dropped. */
+const FAVICON_MAX = 32 * 1024; // characters of data: URL kept per host
+const faviconKey = url => 'favicon:' + new URL(url).hostname.replace(/^www\./, '');
+
+// the compiled blocking rules, rebuilt after the rules change
+let blockers;
+const getBlockers = async () => {
+  if (!blockers) {
+    const {blocked} = await chrome.storage.local.get({blocked: []});
+    blockers = blocked.map(rule => regExp(convert(rule))).filter(Boolean);
+  }
+  return blockers;
+};
+
+const toDataUrl = async url => {
+  if (url.startsWith('data:image/')) {
+    return url;
+  }
+  const blob = await (await fetch(url, {credentials: 'omit'})).blob();
+  // base64 grows 4/3: skip what cannot fit before encoding it
+  if (blob.type.startsWith('image/') === false || blob.size > FAVICON_MAX * 3 / 4) {
+    return '';
+  }
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+};
+
+const seen = new Map(); // key -> icon URL already stored in this background session
+const rememberFavicons = async tabs => {
+  const res = await getBlockers();
+  for (const tab of tabs) {
+    if (!tab.favIconUrl || /^(https?|data):/.test(tab.favIconUrl) === false || !res.some(re => re.test(tab.url))) {
+      continue;
+    }
+    const key = faviconKey(tab.url);
+    if (seen.get(key) === tab.favIconUrl) {
+      continue;
+    }
+    try {
+      const data = await toDataUrl(tab.favIconUrl);
+      if (data && data.length <= FAVICON_MAX) {
+        await chrome.storage.local.set({[key]: data});
+        seen.set(key, tab.favIconUrl);
+      }
+    }
+    catch (e) {}
+  }
+};
+
+const webTabs = () => chrome.tabs.query({url: ['http://*/*', 'https://*/*']});
+
+chrome.storage.onChanged.addListener(async ps => {
+  if (ps.blocked === undefined) {
+    return;
+  }
+  blockers = undefined;
+  const before = new Set(ps.blocked.oldValue || []);
+  const now = new Set(ps.blocked.newValue || []);
+  if ([...now].some(rule => before.has(rule) === false)) {
+    // the tabs still show the site here, the blocker reloads them right after
+    rememberFavicons(await webTabs());
+  }
+  if ([...before].some(rule => now.has(rule) === false)) {
+    const res = await getBlockers();
+    const stored = Object.keys(await chrome.storage.local.get(null)).filter(k => k.startsWith('favicon:'));
+    const gone = stored.filter(k => res.some(re => re.test('https://' + k.slice(8) + '/')) === false);
+    if (gone.length) {
+      chrome.storage.local.remove(gone);
+      gone.forEach(k => seen.delete(k));
+    }
+  }
+});
+chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
+  // a new icon on a page. A blocked site only loads one while it is unlocked
+  if (info.favIconUrl && /^https?:/.test(tab.url || '')) {
+    rememberFavicons([tab]);
   }
 });
 
@@ -317,10 +438,8 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
     })));
   }
   else if (request.method === 'check-password') {
-    sha256.validate(request, () => response(true), msg => {
-      response(false);
-      notify(msg || translate('bg_msg_2'));
-    });
+    // the asking page shows the error itself
+    sha256.validate(request, () => response(true), failWith(response));
     return true;
   }
   else if (request.method === 'ask-for-password') {
@@ -333,14 +452,20 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
   }
   else if (request.method === 'open-once') {
     chrome.storage.local.get({
-      'timeout': 60, // seconds; default unlock duration
+      'unlock-default': 1, // minutes | 'tab' | 'session' (settings page, "Lock")
+      'timeout': 60, // seconds; legacy default unlock duration
       'no-password-on-unlock': false,
       'sha256': '', // sha256 hash code of the user password
       'password': '' // deprecated
     }).then(prefs => {
-      // normalize the requested unlock mode; fall back to the configured seconds
+      // the lock screen sends no mode: use the "stay unlocked for" setting,
+      // then the legacy seconds
+      const def = prefs['unlock-default'];
       let mode = request.mode;
-      if (!mode || (mode.type === 'for' && (!mode.seconds || mode.seconds < 1))) {
+      if (!mode) {
+        mode = (def === 'tab' || def === 'session') ? {type: def} : {type: 'for', seconds: Number(def) * 60};
+      }
+      if (mode.type === 'for' && !(mode.seconds >= 1)) {
         mode = {type: 'for', seconds: prefs.timeout};
       }
       const next = async () => {
@@ -349,8 +474,7 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
           response(true);
         }
         catch (e) {
-          response(false);
-          notify(e.message);
+          response({error: e.message});
         }
       };
 
@@ -360,10 +484,8 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
         next();
       }
       else {
-        sha256.validate(request, next, msg => {
-          response(false);
-          notify(msg || translate('bg_msg_2'));
-        });
+        // {error} instead of a desktop notification: the lock screen shows it
+        sha256.validate(request, next, failWith(response));
       }
     });
 
@@ -400,6 +522,12 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
 
     return true;
   }
+  else if (request.method === 'relock-all') {
+    // locking needs no password: it can only make blocking stricter
+    relock().then(() => response(true), () => response(false));
+
+    return true;
+  }
   else if (request.method === 'block-host') {
     // block a site straight from the popup: add it and let update() reload the
     // tab onto the blocked page immediately (no domain-confirmation prompt),
@@ -431,10 +559,7 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
       if ((prefs.password || prefs.sha256) && prefs['no-password-on-add'] === false) {
         prompt(translate('bg_msg_17')).then(password => {
           if (password) {
-            sha256.validate({password}, doAdd, msg => {
-              response(false);
-              notify(msg || translate('bg_msg_2'));
-            });
+            sha256.validate({password}, doAdd, failWith(response));
           }
           else {
             response(false);
@@ -473,10 +598,7 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
       if ((prefs.password || prefs.sha256) && prefs['no-password-on-add'] === false) {
         prompt(translate('bg_msg_17')).then(password => {
           if (password) {
-            sha256.validate({password}, doRemove, msg => {
-              response(false);
-              notify(msg || translate('bg_msg_2'));
-            });
+            sha256.validate({password}, doRemove, failWith(response));
           }
           else {
             response(false);
@@ -516,9 +638,7 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
 chrome.alarms.onAlarm.addListener(async alarm => {
   if (alarm.name.startsWith('release.once.')) {
     const id = Number(alarm.name.slice('release.once.'.length));
-    await chrome.declarativeNetRequest.updateSessionRules({
-      removeRuleIds: [id]
-    });
+    await relock([id]);
   }
   else if (alarm.name === 'release.open.once') { // legacy dynamic rule
     chrome.declarativeNetRequest.updateDynamicRules({

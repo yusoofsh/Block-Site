@@ -17,17 +17,11 @@
   "options_custom_css": {
     "message": "Özel CSS:"
   },
-  "options_resolve": {
-    "message": "Engellenen sayfaların başlığını çözün (engellenen sunucuların herhangi bir istek almasını önlemek için bu seçeneğin işaretini kaldırın)"
-  },
   "options_startup": {
     "message": "Başlatma işleminden sonra mevcut sayfalarda engelleme gerçekleştir"
   },
   "options_startup_current": {
     "message": "Yeni bir kural eklendiğinde eşleşen sayfayı engelle"
-  },
-  "options_allow_access": {
-    "message": "Engellenmemiş ana bilgisayar adına erişime izin ver (saniye cinsinden)"
   },
   "options_block_period": {
     "message": "Yanlış şifre birden fazla girildiğinde şifre kontrolünü engelle (dakika cinsinde)"
@@ -217,30 +211,6 @@
   },
   "blocked_restricted": {
     "message": "Sınırlı Erişim"
-  },
-  "blocked_title": {
-    "message": "Başlık"
-  },
-  "blocked_since": {
-    "message": "Bu zamandan beri engellendi"
-  },
-  "blocked_counter": {
-    "message": "Engellenen İçerik"
-  },
-  "blocked_master_password": {
-    "message": "Ana parolayı girin, ardından bir dakikalığına engellemeyi kaldırmak için enter'a basın"
-  },
-  "blocked_options": {
-    "message": "Seçenekler Sayfası"
-  },
-  "blocked_rate": {
-    "message": "Beni derecelendir"
-  },
-  "blocked_remove_blocking": {
-    "message": "Engellemeyi Kaldır"
-  },
-  "blocked_add_to_whitelist": {
-    "message": "Beyaz Listeye Ekle"
   },
   "blocked_paste": {
     "message": "Yapıştırma kabul edilmiyor. Bunun yerine şifreyi yazın."

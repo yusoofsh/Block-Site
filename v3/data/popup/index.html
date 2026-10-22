@@ -3,8 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/data/theme.css">
   <link rel="stylesheet" href="index.css">
   <title>Block Site</title>
+  <link rel="icon" type="image/png" href="/data/icons/32.png">
 </head>
 <body>
   <div class="warning" id="warning"></div>
@@ -14,13 +16,21 @@
   </div>
   <div id="actions">
     <input type="button" id="mode" value="">
-    <input type="button" id="options" data-i18n="popup_options_page" data-i18n-value="value">
   </div>
+  <div id="unlocked" hidden>
+    <span id="unlocked-count"></span>
+    <button type="button" class="btn-primary" id="lock-now" data-i18n="popup_lock_now"></button>
+  </div>
+  <button type="button" id="autolock">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+    <span id="autolock-text"></span>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+  </button>
   <input type="search" id="filter" data-i18n="popup_filter" data-i18n-value="placeholder">
   <div id="list"></div>
   <div id="empty" data-i18n="popup_empty" hidden></div>
   <template id="row">
-    <div class="row">
+    <div class="site">
       <div class="info">
         <span class="host"></span>
         <span class="note"></span>

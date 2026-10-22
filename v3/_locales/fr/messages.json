@@ -14,14 +14,8 @@
   "options_user_message": {
     "message": "Message utilisateur :"
   },
-  "options_resolve": {
-    "message": "Récupérer le titre des pages bloquées (décochez cette option pour empêcher les serveurs bloqués de recevoir toute demande)"
-  },
   "options_startup": {
     "message": "Effectuer un blocage sur les pages existantes après l'initialisation"
-  },
-  "options_allow_access": {
-    "message": "Autoriser l'accès au nom d'hôte débloqué pour (en secondes)"
   },
   "options_block_period": {
     "message": "Bloquer la vérification du mot de passe en cas de saisie multiple d'un mot de passe erroné (en minutes)"
@@ -136,24 +130,6 @@
   },
   "blocked_restricted": {
     "message": "Accès restreint"
-  },
-  "blocked_title": {
-    "message": "Titre"
-  },
-  "blocked_since": {
-    "message": "Bloqué depuis"
-  },
-  "blocked_master_password": {
-    "message": "Entrez le mot de passe principal pour débloquer :"
-  },
-  "blocked_options": {
-    "message": "Page des options"
-  },
-  "blocked_remove_blocking": {
-    "message": "Supprimer le blocage"
-  },
-  "blocked_add_to_whitelist": {
-    "message": "Ajouter à la liste blanche"
   },
   "blocked_no_action": {
     "message": "Le mot de passe principal n'est pas correct. Remplissez la case et réessayez"

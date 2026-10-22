@@ -2,57 +2,67 @@
 <html>
 <head>
   <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/data/theme.css">
   <link rel="stylesheet" href="index.css">
   <title data-i18n="blocked_restricted"></title>
   <script type="text/javascript" src="pre.js"></script>
   <style type="text/css" id="css"></style>
-  <link rel="icon" type="image/png" href="/data/icons/32.png">
+  <link rel="icon" type="image/png" href="/data/icons/blocked/32.png" id="tab-icon">
 </head>
 <body>
-  <header vbox>
-    <h1 flex="1" data-i18n="blocked_restricted"></h1>
-    <div>
-      <span data-i18n="blocked_title"></span>
-      <span id="title">...</span>
-      <span>URL</span>
-      <a id="url" href="">
-        <span id="sub-domain"></span>
-        <span id="domain">...</span>
-        <span id="pathname"></span>
-        <span id="search"></span>
-      </a>
-      <span data-i18n="blocked_rule" id="rule-label" hidden></span>
-      <span id="rule" data-i18n="blocked_rule_ph" data-i18n-value="placeholder" hidden></span>
-      <span data-i18n="blocked_since"></span>
-      <span id="date"></span>
-      <span data-i18n="blocked_counter"></span>
-      <span id="counter"></span>
-      <span data-i18n="blocked_note" id="note-label" hidden></span>
-      <textarea id="note" rows="2" data-i18n="blocked_note_ph" data-i18n-value="placeholder" hidden></textarea>
+  <main>
+    <div class="lock">
+      <!-- the locked site's icon (or its first letter) with a lock badge -->
+      <div class="site-icon" aria-hidden="true">
+        <img id="favicon" alt="" hidden>
+        <span id="monogram"></span>
+        <span class="lock-badge">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.6"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="5" y="11" width="14" height="10" rx="2.5" fill="currentColor"/>
+            <path d="M8 11V8a4 4 0 0 1 8 0v3"/>
+          </svg>
+        </span>
+      </div>
+      <h1>
+        <a id="url" href="">
+          <span id="sub-domain"></span><span id="domain">...</span>
+          <span class="path"><span id="pathname"></span><span id="search"></span></span>
+        </a>
+      </h1>
+      <p id="message"></p>
+
+      <form>
+        <div class="field">
+          <input type="password" required="true" autocomplete="off"
+            data-i18n="blocked_password_ph" data-i18n-value="placeholder">
+          <button type="submit" id="unlock" class="btn-primary">
+            <span data-i18n="blocked_unlock"></span>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+        <p id="error" role="alert"></p>
+        <p id="info"></p>
+      </form>
     </div>
-  </header>
-  <p id="message"></p>
-  <div flex="1"></div>
-  <footer>
-    <form flex="1" hbox align=center>
-      <select id="duration" data-i18n="blocked_unlock_duration" data-i18n-value="title"></select>
-      <input type="password" required="true" data-i18n="blocked_master_password" data-i18n-value="placeholder">
-      <input type="submit" id="unlock" data-i18n="blocked_unlock" data-i18n-value="value">
-    </form>
-    <div>
-      <a href="#" id="rate" data-i18n="blocked_rate" data-hide=true>-</a>
-      <a href="#" id="exception">-</a>
-      <a href="#" id="options" data-i18n="blocked_options"></a>
-    </div>
-  </footer>
+    <!-- "remove blocking", pressed by the toolbar button on this page; not shown -->
+    <a href="#" id="exception" hidden></a>
+  </main>
+
   <notification-view id="toast"></notification-view>
-  <input type="button" id="switch">
+  <button type="button" id="switch" class="btn-ghost" title="Theme" aria-label="Theme">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="8"/>
+      <path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/>
+    </svg>
+  </button>
 
   <script src="/data/components/notification-view/notification-view.js"></script>
   <script src="/utils.js"></script>
   <script src="tld.js"></script>
   <script src="index.js"></script>
-  <script src="rate.js"></script>
 </body>
 </html>

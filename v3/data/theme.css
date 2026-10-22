@@ -1,0 +1,295 @@
+/* shared design tokens + components for every extension page
+   (lock screen, settings, popup, prompt). Colors follow the system theme.
+   A page can force one with <html class="dark"> or <html class="light">.
+   Element defaults sit inside :where() so any class overrides them. */
+
+:root {
+  color-scheme: light dark;
+
+  --bg: light-dark(#f6f6f8, #0c0c10);
+  --surface: light-dark(#ffffff, #15151b);
+  --surface-2: light-dark(#f1f1f4, #1d1d25);
+  --surface-3: light-dark(#e8e8ed, #262630);
+  --border: light-dark(#e4e4ea, #262630);
+  --border-strong: light-dark(#cfcfd8, #383844);
+  --fg: light-dark(#17171c, #ececf1);
+  --muted: light-dark(#6b6b78, #9b9bab);
+  --accent: light-dark(#5b4ef0, #9488ff);
+  --accent-hover: light-dark(#4a3de0, #aaa0ff);
+  --accent-fg: light-dark(#ffffff, #120f2e);
+  --accent-soft: light-dark(#efedff, #211e3d);
+  --danger: light-dark(#c8341f, #ff8f80);
+  --lock: #e11d48; /* the "locked" red of the lock badge and the blocked toolbar icon */
+  --danger-soft: light-dark(#fdeeec, #3b1f1c);
+  --warning-soft: light-dark(#fff8e6, #2f2814);
+  --warning-border: light-dark(#f1d68f, #5e5124);
+  --focus: light-dark(rgb(91 78 240 / 0.28), rgb(148 136 255 / 0.38));
+
+  --radius: 14px;
+  --radius-sm: 10px;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 28px rgb(0 0 0 / 0.06);
+  --shadow-lg: 0 2px 6px rgb(0 0 0 / 0.06), 0 24px 60px rgb(0 0 0 / 0.12);
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+:root.dark {
+  color-scheme: dark;
+}
+:root.light {
+  color-scheme: light;
+}
+
+/* form controls */
+:where(input[type=text], input[type=password], input[type=number], input[type=search],
+  input[type=url], input[type=time], select, textarea),
+.input {
+  font: inherit;
+  color: var(--fg);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+:where(input, select, textarea):focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--focus);
+}
+:where(textarea) {
+  font-family: var(--mono);
+  font-size: 12px;
+  resize: vertical;
+}
+
+/* buttons */
+:where(button, input[type=button], input[type=submit]),
+.btn {
+  font: inherit;
+  font-weight: 600;
+  color: var(--fg);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 9px 16px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
+}
+:where(button, input[type=button], input[type=submit]):hover,
+.btn:hover {
+  background: var(--surface-3);
+}
+:where(button, input[type=button], input[type=submit]):focus-visible,
+.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus);
+}
+.btn-primary {
+  color: var(--accent-fg);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.btn-primary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+.btn-danger {
+  color: var(--danger);
+  background: var(--danger-soft);
+  border-color: transparent;
+}
+.btn-danger:hover {
+  background: var(--danger-soft);
+  border-color: var(--danger);
+}
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+}
+.btn-ghost:hover {
+  background: var(--surface-2);
+}
+:where(button, input):disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* quick-select cards: <div class="choices"><label class="choice">
+   <input type="radio" name="x" value="1"><span class="card"><b>1 min</b>
+   <small>hint</small></span></label>…</div> */
+.choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  min-width: 0;
+}
+.choices.compact {
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+}
+.choice {
+  position: relative;
+  display: flex;
+}
+.choice > input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.choice > .card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
+}
+.choices.compact .choice > .card {
+  align-items: center;
+  padding: 9px 6px;
+}
+.choice > .card b {
+  font-weight: 600;
+}
+.choice > .card small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+.choice:hover > .card {
+  border-color: var(--border-strong);
+}
+.choice > input:checked + .card {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.choice > input:checked + .card b {
+  color: var(--accent);
+}
+.choice > input:focus-visible + .card {
+  box-shadow: 0 0 0 3px var(--focus);
+}
+
+/* on/off switch: <input type="checkbox" class="toggle"> */
+input[type=checkbox].toggle {
+  appearance: none;
+  position: relative;
+  flex-shrink: 0;
+  width: 38px;
+  height: 22px;
+  margin: 0;
+  border-radius: 999px;
+  background: var(--surface-3);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+  cursor: pointer;
+  transition: background-color 0.15s, box-shadow 0.15s;
+}
+input[type=checkbox].toggle::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
+  transition: transform 0.15s;
+}
+input[type=checkbox].toggle:checked {
+  background: var(--accent);
+  box-shadow: none;
+}
+input[type=checkbox].toggle:checked::after {
+  transform: translateX(16px);
+}
+input[type=checkbox].toggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus);
+}
+
+/* settings layout: a .group of .row items, label left and control right
+   <div class="group"><div class="row"><div class="label"><b>Title</b>
+   <small>help</small></div><input …></div></div>
+   .row is scoped to .group so a page's own .row class is left alone. */
+.group {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.group .row + .row {
+  border-top: 1px solid var(--border);
+}
+.group .row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+}
+/* only side-by-side rows wrap: a wrapping column flexbox sizes an
+   auto-fill .choices grid as if its cards sat in one column */
+.group .row:not(.stack) {
+  flex-wrap: wrap;
+}
+.group .row:not(.stack) > .label {
+  flex: 1 1 160px;
+}
+.group .row.stack {
+  flex-direction: column;
+  align-items: stretch;
+}
+.group .row .label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.group .row .label b {
+  font-weight: 600;
+}
+.group .row .label small {
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
+/* [hidden] always wins over a component's own display */
+[hidden] {
+  display: none !important;
+}
+
+/* surfaces */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.muted {
+  color: var(--muted);
+}
+
+@media (max-width: 760px) {
+  .group .row {
+    padding: 12px 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}

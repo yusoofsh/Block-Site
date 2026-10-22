@@ -1,4 +1,4 @@
-/* global getRelativeTime */
+/* global getRelativeTime, tld */
 'use strict';
 
 // localization
@@ -6,7 +6,16 @@
   e[e.dataset.i18nValue || 'textContent'] = chrome.i18n.getMessage(e.dataset.i18n);
 });
 
-const send = o => new Promise(resolve => chrome.runtime.sendMessage(o, resolve));
+// the worker answers {error} when a password was wrong: show it and resolve false
+const send = o => new Promise(resolve => chrome.runtime.sendMessage(o, r => {
+  if (r?.error) {
+    showError(r.error);
+    resolve(false);
+  }
+  else {
+    resolve(r);
+  }
+}));
 
 const modeBtn = document.getElementById('mode');
 let domainMode = true; // kept in sync with the persisted 'popup-domain' pref
@@ -101,16 +110,35 @@ const domainFor = url => {
   }
 };
 
+// show a worker error (like a wrong password) in the banner for a few seconds
+let errorTimer = 0;
+let bannerText = '';
+const showError = message => {
+  const banner = document.getElementById('warning');
+  if (banner.classList.contains('error') === false) {
+    bannerText = banner.textContent; // what to restore, if any
+  }
+  banner.textContent = message;
+  banner.classList.add('error');
+  clearTimeout(errorTimer);
+  errorTimer = setTimeout(() => {
+    banner.classList.remove('error');
+    banner.textContent = bannerText;
+  }, 3000);
+};
+
 // block the current URL or, in domain mode, the whole registrable domain
 // (convert() compiles a bare domain into a regex that matches the domain,
 // all its subdomains and every path)
-const blockCurrent = () => {
+const blockCurrent = async () => {
   const {url} = effective();
   const host = domainMode ? domainFor(url) : ruleForUrl(url);
   if (!host) {
     return;
   }
-  chrome.runtime.sendMessage({method: 'block-host', host, tabId: currentTab.id}, () => window.close());
+  if (await send({method: 'block-host', host, tabId: currentTab.id})) {
+    window.close();
+  }
 };
 
 // permanently unblock the current URL or, in domain mode, every rule of its
@@ -161,7 +189,7 @@ const updateToggle = prefs => {
   modeBtn.disabled = !usable;
   modeBtn.value = chrome.i18n.getMessage(domainMode ? 'popup_switch_url' : 'popup_switch_domain');
   btn.title = '';
-  btn.classList.remove('block');
+  btn.classList.remove('btn-primary');
   if (!usable) {
     btn.value = chrome.i18n.getMessage(domainMode ? 'popup_block_domain' : 'popup_block');
     return;
@@ -171,7 +199,7 @@ const updateToggle = prefs => {
       // explicitly allowed in reverse mode; the action removes that allow entry
       btn.value = chrome.i18n.getMessage(domainMode ? 'popup_block_domain' : 'popup_block');
       btn.onclick = blockCurrent;
-      btn.classList.add('block');
+      btn.classList.add('btn-primary');
     }
     else {
       // blocked-by-default in reverse mode: adding an allow rule happens on the
@@ -189,7 +217,7 @@ const updateToggle = prefs => {
   else {
     btn.value = chrome.i18n.getMessage(domainMode ? 'popup_block_domain' : 'popup_block');
     btn.onclick = blockCurrent;
-    btn.classList.add('block');
+    btn.classList.add('btn-primary');
   }
 };
 
@@ -253,40 +281,57 @@ document.getElementById('filter').addEventListener('input', render);
 modeBtn.addEventListener('click', () => {
   chrome.storage.local.set({'popup-domain': !domainMode}, () => render());
 });
-document.getElementById('options').addEventListener('click', e => {
-  e.preventDefault();
-  chrome.runtime.openOptionsPage();
-  window.close();
-});
 
 // keep the list fresh if rules change while the popup is open
 chrome.storage.onChanged.addListener(ps => {
   if (ps.blocked || ps.notes) {
     render();
   }
+  if (ps['idle-lock']) {
+    renderIdle(ps['idle-lock'].newValue);
+  }
 });
 
-// is this site unblocked by a session rule
-const warning = async () => {
-  if (!currentTab || !currentTab.url) {
-    return;
-  }
-
-  const rules = await chrome.declarativeNetRequest.getSessionRules();
-  for (const rule of rules) {
-    try {
-      if (new RegExp(rule.condition.regexFilter, 'i').test(currentTab.url)) {
-        document.getElementById('warning').textContent = chrome.i18n.getMessage('bg_msg_31');
-        return;
-      }
-    }
-    catch (e) {}
-  }
+// auto-lock status, a shortcut to the Lock page of the settings
+const renderIdle = value => {
+  const minutes = Math.max(0, Number(value) || 0);
+  document.getElementById('autolock-text').textContent = minutes ?
+    chrome.i18n.getMessage('popup_autolock_on').replace('##', minutes) :
+    chrome.i18n.getMessage('popup_autolock_off');
 };
+document.getElementById('autolock').addEventListener('click', () => {
+  chrome.tabs.create({url: chrome.runtime.getURL('/data/options/index.html#/lock')}, () => window.close());
+});
+chrome.storage.local.get({'idle-lock': 0}, prefs => renderIdle(prefs['idle-lock']));
+
+// sites unlocked right now: how many, a one-click way to lock them all again,
+// and a warning when the current tab is one of them
+const unlockedBox = document.getElementById('unlocked');
+const refreshUnlocked = async () => {
+  const unlocks = (await chrome.declarativeNetRequest.getSessionRules()).filter(r => r.action?.type === 'allow');
+  unlockedBox.hidden = unlocks.length === 0;
+  document.getElementById('unlocked-count').textContent = chrome.i18n.getMessage('popup_unlocked_count')
+    .replace('##', unlocks.length);
+
+  const url = currentTab?.url;
+  const here = Boolean(url) && unlocks.some(rule => {
+    try {
+      return new RegExp(rule.condition.regexFilter, 'i').test(url);
+    }
+    catch (e) {
+      return false;
+    }
+  });
+  document.getElementById('warning').textContent = here ? chrome.i18n.getMessage('bg_msg_31') : '';
+};
+document.getElementById('lock-now').addEventListener('click', async () => {
+  await send({method: 'relock-all'});
+  refreshUnlocked();
+});
 
 chrome.tabs.query({active: true, currentWindow: true}, tabs => {
   currentTab = tabs && tabs[0];
   render();
-  warning();
+  refreshUnlocked();
 });
 
