@@ -154,10 +154,6 @@ form {
 .field input[type=password]:focus-visible {
   box-shadow: none;
 }
-.field input[type=password][hidden] + #unlock {
-  flex: 1;
-  justify-content: center;
-}
 #unlock {
   display: inline-flex;
   align-items: center;
@@ -190,7 +186,7 @@ form {
 }
 
 #info {
-  margin: 14px 0 0;
+  margin: 0 0 12px;
   color: var(--muted);
   font-size: 12.5px;
 }
@@ -210,6 +206,40 @@ form {
 
 #toast {
   z-index: 1;
+}
+
+/* reminder mode: the site opens with one click ("Unlock without the password"
+   or no password set). It reads as a pause, not a lock: an amber hourglass
+   badge, a question, and "Go back" as the main button next to "Open anyway" */
+html.reminder {
+  --lock: #d97706;
+}
+html:not(.reminder) :is(#question, #back, .hourglass-glyph),
+html.reminder .lock-glyph {
+  display: none;
+}
+html.reminder #question {
+  margin: 10px 0 0;
+  font-size: 15px;
+  color: var(--muted);
+}
+html.reminder .field {
+  padding: 0;
+  gap: 8px;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+html.reminder #back,
+html.reminder #unlock {
+  display: inline-flex;
+  flex: 1;
+  justify-content: center;
+  padding: 12px 16px;
+}
+/* the mode is known only after the settings load: keep the form hidden until then */
+html:not(.ready) form {
+  visibility: hidden;
 }
 
 /* "simple" mode: embedded frames and the optional minimal page view */

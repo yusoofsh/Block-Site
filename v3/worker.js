@@ -130,6 +130,30 @@ sha256.validate = ({password}, resolve, reject) => chrome.storage.local.get({
 // answer a page's password-gated request: true on success, {error} to show on the page
 const failWith = response => msg => response({error: msg});
 
+/* the password policy for actions that ask through the prompt window
+   'add'    makes blocking stricter: skipped with "no-password-on-add"
+   'unlock' opens a site for a while: skipped in reminder mode ("no-password-on-unlock")
+   others   ('remove', 'pause') always ask when a password is set
+   Resolves true when allowed, false when the prompt was cancelled, and rejects
+   with the error text for a wrong password. */
+const PASSWORD_WAIVERS = {add: 'no-password-on-add', unlock: 'no-password-on-unlock'};
+const withPassword = async (kind, message) => {
+  const prefs = await chrome.storage.local.get({
+    'sha256': '',
+    'password': '', // deprecated
+    'no-password-on-add': false,
+    'no-password-on-unlock': false
+  });
+  if ((!prefs.sha256 && !prefs.password) || prefs[PASSWORD_WAIVERS[kind]]) {
+    return true;
+  }
+  const password = await prompt(translate(message));
+  if (!password) {
+    return false;
+  }
+  return new Promise((resolve, reject) => sha256.validate({password}, () => resolve(true), reject));
+};
+
 /* user action */
 const userAction = async (tabId, href, frameId) => {
   // this is an internal tab, press the unblock button
@@ -145,10 +169,7 @@ const userAction = async (tabId, href, frameId) => {
   const prefs = await chrome.storage.local.get({
     'blocked': [],
     'notes': {},
-    'reverse': false,
-    'no-password-on-add': false,
-    'sha256': '', // sha256 hash code of the user password
-    'password': '' // deprecated
+    'reverse': false
   });
 
   // is this site unblocked by a session rule
@@ -191,15 +212,8 @@ const userAction = async (tabId, href, frameId) => {
     }
   };
 
-  if ((prefs.password || prefs.sha256) && prefs['no-password-on-add'] === false) {
-    const password = await prompt(translate('bg_msg_17'));
-    if (password) {
-      sha256.validate({password}, next, notify);
-    }
-  }
-  else {
-    next();
-  }
+  // stricter either way: in reverse mode "blocked" lists the allowed sites
+  withPassword('add', 'bg_msg_17').then(allowed => allowed && next(), notify);
 };
 chrome.action.onClicked.addListener(tab => {
   userAction(tab.id, tab.url, 0);
@@ -534,10 +548,7 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
     // honoring the master password unless the user opted out
     chrome.storage.local.get({
       'blocked': [],
-      'notes': {},
-      'no-password-on-add': false,
-      'sha256': '',
-      'password': ''
+      'notes': {}
     }).then(prefs => {
       const host = (request.host || '').trim();
       if (!host) {
@@ -556,32 +567,17 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
           changed: Math.random() // make sure the blocker reloads matching tabs
         }, () => response(true));
       };
-      if ((prefs.password || prefs.sha256) && prefs['no-password-on-add'] === false) {
-        prompt(translate('bg_msg_17')).then(password => {
-          if (password) {
-            sha256.validate({password}, doAdd, failWith(response));
-          }
-          else {
-            response(false);
-          }
-        });
-      }
-      else {
-        doAdd();
-      }
+      withPassword('add', 'bg_msg_17').then(allowed => allowed ? doAdd() : response(false), failWith(response));
     });
 
     return true;
   }
   else if (request.method === 'remove-hosts') {
-    // remove one or more blocked hostnames from the popup, honoring the
-    // master password unless the user opted out for adding/removing rules
+    // remove one or more blocked hostnames from the popup. Removing always
+    // needs the password when one is set (see withPassword)
     chrome.storage.local.get({
       'blocked': [],
-      'notes': {},
-      'no-password-on-add': false,
-      'sha256': '',
-      'password': ''
+      'notes': {}
     }).then(prefs => {
       const doRemove = () => {
         const drop = new Set(request.hosts);
@@ -595,19 +591,7 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
           changed: Math.random() // make sure the blocker reloads
         }, () => response(true));
       };
-      if ((prefs.password || prefs.sha256) && prefs['no-password-on-add'] === false) {
-        prompt(translate('bg_msg_17')).then(password => {
-          if (password) {
-            sha256.validate({password}, doRemove, failWith(response));
-          }
-          else {
-            response(false);
-          }
-        });
-      }
-      else {
-        doRemove();
-      }
+      withPassword('remove', 'bg_msg_17').then(allowed => allowed ? doRemove() : response(false), failWith(response));
     });
 
     return true;

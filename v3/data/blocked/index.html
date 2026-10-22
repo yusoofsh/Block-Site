@@ -13,15 +13,20 @@
 <body>
   <main>
     <div class="lock">
-      <!-- the locked site's icon (or its first letter) with a lock badge -->
+      <!-- the locked site's icon (or its first letter) with a lock badge,
+           an hourglass in reminder mode -->
       <div class="site-icon" aria-hidden="true">
         <img id="favicon" alt="" hidden>
         <span id="monogram"></span>
         <span class="lock-badge">
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.6"
-            stroke-linecap="round" stroke-linejoin="round">
+          <svg class="lock-glyph" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+            stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
             <rect x="5" y="11" width="14" height="10" rx="2.5" fill="currentColor"/>
             <path d="M8 11V8a4 4 0 0 1 8 0v3"/>
+          </svg>
+          <svg class="hourglass-glyph" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+            stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 3h10M7 21h10M8 3c0 5 8 5 8 9s-8 4-8 9M16 3c0 5-8 5-8 9s8 4 8 9"/>
           </svg>
         </span>
       </div>
@@ -31,20 +36,22 @@
           <span class="path"><span id="pathname"></span><span id="search"></span></span>
         </a>
       </h1>
+      <p id="question" data-i18n="blocked_reminder_question"></p>
       <p id="message"></p>
 
       <form>
+        <p id="info"></p>
         <div class="field">
+          <button type="button" id="back" class="btn-primary" data-i18n="blocked_reminder_back"></button>
           <input type="password" required="true" autocomplete="off"
             data-i18n="blocked_password_ph" data-i18n-value="placeholder">
           <button type="submit" id="unlock" class="btn-primary">
-            <span data-i18n="blocked_unlock"></span>
+            <span id="unlock-label" data-i18n="blocked_unlock"></span>
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"
               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
           </button>
         </div>
         <p id="error" role="alert"></p>
-        <p id="info"></p>
       </form>
     </div>
     <!-- "remove blocking", pressed by the toolbar button on this page; not shown -->

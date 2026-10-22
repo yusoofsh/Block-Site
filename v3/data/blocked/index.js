@@ -152,6 +152,16 @@ password.addEventListener('input', () => {
   document.getElementById('error').textContent = '';
 });
 
+// reminder mode: leave the site, back to the previous page or by closing the tab
+document.getElementById('back').addEventListener('click', () => {
+  if (history.length > 1) {
+    history.back();
+  }
+  else {
+    post({method: 'close-page'});
+  }
+});
+
 // theme toggle: flips whatever is showing now (the system theme by default)
 document.getElementById('switch').addEventListener('click', () => {
   const root = document.documentElement;
@@ -184,16 +194,18 @@ Promise.all([
   // the master password is optional (https://github.com/ray-lothian/Block-Site/issues/42).
   const hasPassword = prefs.password || prefs.sha256;
   const unlockNeedsPassword = hasPassword && !prefs['no-password-on-unlock'];
-  // don't force a password on the unlock form when it isn't required...
+  // reminder mode: when opening the site needs no password, the page is a pause
+  // with "Go back" and "Open anyway" instead of a lock (see index.css)
   if (!unlockNeedsPassword) {
+    document.documentElement.classList.add('reminder');
     password.required = false;
-  }
-  // ...but only fully hide the field when there is no password at all. If a
-  // password exists it is still needed by the "remove blocking" button below,
-  // so keep it visible even when unlocking itself is password-free.
-  if (!hasPassword) {
     password.hidden = true;
+    document.getElementById('unlock-label').textContent = chrome.i18n.getMessage('blocked_reminder_open');
+    // the nudge: "Go back" is the main button, "Open anyway" the plain one
+    document.getElementById('unlock').classList.remove('btn-primary');
+    document.getElementById('back').focus();
   }
+  document.documentElement.classList.add('ready');
   if (args.has('host')) {
     const h = args.get('host');
     const o = prefs.notes[h] || {};
@@ -302,6 +314,7 @@ Promise.all([
           next();
         }
         else {
+          password.hidden = false; // reminder mode hides it, but removing the block needs it
           showError(resp?.error);
         }
       });
