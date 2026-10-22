@@ -1,4 +1,4 @@
-/* global translate, notify, sha256, userAction, openOnce */
+/* global translate, notify, sha256, userAction, openOnce, relock */
 
 const isFF = /Firefox/.test(navigator.userAgent);
 
@@ -185,16 +185,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     chrome.runtime.openOptionsPage();
   }
   else if (info.menuItemId === 'remove-session-rules') {
-    const removeRuleIds = (await chrome.declarativeNetRequest.getSessionRules())
-      .filter(r => r.action?.type === 'allow').map(r => r.id);
-    if (removeRuleIds.length) {
-      chrome.declarativeNetRequest.updateSessionRules({removeRuleIds});
-    }
-    for (const alarm of await chrome.alarms.getAll()) {
-      if (alarm.name.startsWith('release.once')) {
-        chrome.alarms.clear(alarm.name);
-      }
-    }
+    relock();
   }
   else if (info.menuItemId.startsWith('pause-site-period-')) {
     const rest = info.menuItemId.slice('pause-site-period-'.length);

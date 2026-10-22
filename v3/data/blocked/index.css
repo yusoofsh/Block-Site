@@ -11,7 +11,7 @@ body {
   line-height: 1.45;
   color: var(--fg);
   background:
-    radial-gradient(ellipse at top, var(--accent-soft), transparent 60%),
+    radial-gradient(60rem 36rem at 50% -10%, var(--accent-soft), transparent 70%),
     var(--bg);
 }
 
@@ -21,16 +21,14 @@ main {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  padding: 32px 16px;
+  gap: 40px;
+  padding: 48px 16px 32px;
   box-sizing: border-box;
 }
 
 .lock {
   width: 100%;
-  max-width: 600px;
-  box-sizing: border-box;
-  padding: 28px;
+  max-width: 420px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -40,18 +38,29 @@ main {
 .badge {
   display: grid;
   place-items: center;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
   color: var(--accent);
-  background: var(--accent-soft);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+}
+
+.eyebrow {
+  margin: 22px 0 6px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
 }
 
 h1 {
-  margin: 14px 0 4px;
-  font-size: 22px;
+  margin: 0;
+  max-width: 100%;
+  font-size: 26px;
   font-weight: 650;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
 }
 
 a {
@@ -60,29 +69,38 @@ a {
 }
 
 #url {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  max-width: 100%;
-  overflow: hidden;
+  display: block;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+#sub-domain {
   color: var(--muted);
 }
-#domain {
-  color: var(--fg);
-  font-weight: 650;
-}
-#pathname,
-#search {
-  max-width: 260px;
+.path {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.path[hidden] {
+  display: none;
+}
 
 #message {
-  margin: 12px 0 0;
+  margin: 18px 0 0;
+  padding: 12px 14px;
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+  text-align: start;
 }
 #message:empty {
   display: none;
@@ -90,90 +108,61 @@ a {
 
 form {
   width: 100%;
-  margin-top: 22px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  text-align: start;
-}
-.hint {
-  margin: 0;
-  color: var(--muted);
-  text-align: center;
-}
-fieldset {
-  margin: 0;
-  padding: 0;
-  border: none;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-legend {
-  padding: 0;
-  margin-bottom: 8px;
-  font-size: 12px;
-  font-weight: 650;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--muted);
-}
-.fine {
-  color: var(--muted);
-  font-size: 12px;
-}
-.remember {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-}
-.unlock-row {
-  display: flex;
-  gap: 8px;
-}
-.unlock-row input[type=password] {
-  flex: 1;
-  min-width: 0;
+  margin-top: 28px;
 }
 
-details {
-  width: 100%;
-  margin-top: 22px;
-  border-top: 1px solid var(--border);
-  padding-top: 12px;
-  text-align: start;
+/* one pill: the password input with the unlock button inside it */
+.field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px;
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
-summary {
-  cursor: pointer;
-  color: var(--muted);
-  font-size: 13px;
+.field:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--focus), var(--shadow);
 }
-dl {
-  display: grid;
-  grid-template-columns: max-content 1fr;
-  gap: 6px 18px;
-  margin: 12px 0 0;
-  font-size: 13px;
-}
-dt {
-  color: var(--muted);
-}
-dd {
-  margin: 0;
+.field input[type=password] {
+  flex: 1;
   min-width: 0;
-  overflow-wrap: anywhere;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  box-shadow: none;
 }
-dt[hidden],
-dd[hidden],
-dd:has(> [hidden]:only-child) {
+.field input[type=password]:focus-visible {
+  box-shadow: none;
+}
+.field input[type=password][hidden] + #unlock {
+  flex: 1;
+  justify-content: center;
+}
+#unlock {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 10px;
+}
+
+#info {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+#info:empty {
   display: none;
 }
 
 footer {
   display: flex;
-  gap: 16px;
+  gap: 18px;
   font-size: 13px;
 }
 footer a {
@@ -182,7 +171,7 @@ footer a {
 footer a:hover {
   color: var(--accent);
 }
-/* the "remove blocking" link is replaced by the "Permanently" unlock card */
+/* removing a rule now lives on the settings page and in the toolbar popup */
 #exception,
 #rate[data-hide=true] {
   display: none;
@@ -202,26 +191,23 @@ footer a:hover {
   z-index: 1;
 }
 
-@media (max-width: 480px) {
-  .lock {
-    padding: 22px 16px;
-  }
-  .unlock-row {
-    flex-direction: column;
-  }
-}
-
 /* "simple" mode: embedded frames and the optional minimal page view */
 html.simple main {
-  padding: 8px;
+  padding: 12px;
 }
-html.simple .lock {
-  padding: 16px;
+html.simple .badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
   box-shadow: none;
 }
-html.simple h1,
+html.simple h1 {
+  font-size: 17px;
+}
+html.simple .eyebrow {
+  margin-top: 10px;
+}
 html.simple form,
-html.simple details,
 html.simple footer,
 html.simple #switch {
   display: none !important;

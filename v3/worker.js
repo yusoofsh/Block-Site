@@ -7,7 +7,7 @@
   session rules (own id space, dropped automatically on browser restart):
     1-: temporary "open once" unlocks
 */
-/* global translate, notify, browser */
+/* global translate, notify, browser, idleWatch */
 
 /* imports */
 if (typeof importScripts !== 'undefined') {
@@ -48,6 +48,18 @@ convert.escape = str => {
   ];
   const regex = RegExp('[' + specials.join('\\') + ']', 'g');
   return str.replace(regex, '\\$&');
+};
+// temporary "open once" unlocks: the session ruleset's allow rules
+const getUnlocks = async () => (await chrome.declarativeNetRequest.getSessionRules())
+  .filter(r => r.action?.type === 'allow');
+// the RegExp of a DNR rule's regexFilter, or null when it does not compile
+const ruleRegExp = rule => {
+  try {
+    return new RegExp(rule.condition.regexFilter, 'i');
+  }
+  catch (e) {
+    return null;
+  }
 };
 const sha256 = async (message = '') => {
   const msgBuffer = new TextEncoder('utf-8').encode(message);
@@ -257,6 +269,7 @@ const openOnceImpl = async ({host, mode}) => {
     });
   }
   // 'tab' and 'session' modes need no per-id bookkeeping
+  await idleWatch(true);
 };
 // serialize unlock installs: id allocation reads getSessionRules() then writes,
 // so two concurrent unlocks could otherwise pick the same id and clobber each other
@@ -280,8 +293,7 @@ const tabUrl = url => {
 };
 // a "tab" unlock lives while any open tab still matches its rule; re-check on close
 chrome.tabs.onRemoved.addListener(async closedId => {
-  const unlocks = (await chrome.declarativeNetRequest.getSessionRules())
-    .filter(r => r.id < TAB_ID_MAX && r.action?.type === 'allow');
+  const unlocks = (await getUnlocks()).filter(r => r.id < TAB_ID_MAX);
   if (unlocks.length === 0) {
     return;
   }
@@ -290,108 +302,39 @@ chrome.tabs.onRemoved.addListener(async closedId => {
   const tabs = (await chrome.tabs.query({})).filter(t => t.id !== closedId);
   const urls = tabs.map(t => tabUrl(t.url)).filter(Boolean);
 
-  const remove = [];
-  for (const rule of unlocks) {
-    let re;
-    try {
-      re = new RegExp(rule.condition.regexFilter, 'i');
-    }
-    catch (e) {
-      continue;
-    }
-    if (urls.some(u => re.test(u)) === false) {
-      remove.push(rule.id);
-    }
-  }
-  if (remove.length) {
-    await chrome.declarativeNetRequest.updateSessionRules({removeRuleIds: remove});
-  }
+  const remove = unlocks.filter(rule => {
+    const re = ruleRegExp(rule);
+    return re && urls.some(u => re.test(u)) === false;
+  }).map(r => r.id);
+  // no reload: no open tab matches these rules any more
+  await relock(remove, {reload: false});
 });
 
-/* re-lock: drop temporary unlocks (all of them, or only `ids`) and reload the
-   tabs they covered so the blocking rules send them back to the lock screen.
-   Without the reload an expired unlock would leave its open pages usable. */
-const relock = async ids => {
-  const unlocks = (await chrome.declarativeNetRequest.getSessionRules())
-    .filter(r => r.action?.type === 'allow' && (!ids || ids.includes(r.id)));
-  if (unlocks.length === 0) {
-    return idleWatch();
-  }
-  await chrome.declarativeNetRequest.updateSessionRules({removeRuleIds: unlocks.map(r => r.id)});
-  await Promise.all(unlocks.map(r => chrome.alarms.clear('release.once.' + r.id)));
-
-  const res = [];
-  for (const rule of unlocks) {
-    try {
-      res.push(new RegExp(rule.condition.regexFilter, 'i'));
-    }
-    catch (e) {}
-  }
-  for (const tab of await chrome.tabs.query({})) {
-    if (tab.url && /^https?:/.test(tab.url) && res.some(re => re.test(tab.url))) {
-      chrome.tabs.reload(tab.id);
-    }
-  }
-  await idleWatch(); // nothing left to watch once the last unlock is gone
-};
-
-/* auto-lock on inactivity
-
-   "idle-lock" (minutes, 0 = off) re-locks every temporary unlock, "while tabs
-   are open" included, once the computer has had no keyboard or mouse input
-   for that long, or as soon as the screen locks.
-   Two signals feed it, and each one re-checks the real idle time with
-   queryState() before locking:
-   - idle.onStateChanged, using a detection interval set on every worker wake
-     (the interval is not guaranteed to survive a background restart)
-   - the "idle.check" alarm, which polls only while an unlock exists        */
-const IDLE_MIN_SECONDS = 15; // the smallest interval the idle API accepts
-
-const idleSeconds = minutes => Math.max(IDLE_MIN_SECONDS, Math.round(minutes * 60));
-
-const idleLock = async state => {
-  const prefs = await chrome.storage.local.get({'idle-lock': 0});
-  const minutes = Number(prefs['idle-lock']) || 0;
-  if (minutes <= 0) {
+/* re-lock: drop temporary unlocks (all of them, or only `ids`). Every path
+   that ends an unlock goes through here: expiry, idle, "lock all", tab close
+   and the blocker's stale-rule prune.
+   With `reload` the open tabs they covered are reloaded, so the blocking
+   rules send them back to the lock screen. Without it an expired unlock
+   would leave its pages usable. Discarded tabs re-check on activation. */
+const relock = async (ids, {reload = true} = {}) => {
+  const unlocks = await getUnlocks();
+  const drop = ids ? unlocks.filter(r => ids.includes(r.id)) : unlocks;
+  if (drop.length === 0) {
     return;
   }
-  if (state !== 'locked') {
-    state = await chrome.idle.queryState(idleSeconds(minutes));
-  }
-  if (state === 'idle' || state === 'locked') {
-    await relock();
-  }
-};
+  await chrome.declarativeNetRequest.updateSessionRules({removeRuleIds: drop.map(r => r.id)});
+  await Promise.all(drop.map(r => chrome.alarms.clear('release.once.' + r.id)));
 
-const idleWatch = async () => {
-  const prefs = await chrome.storage.local.get({'idle-lock': 0});
-  const minutes = Number(prefs['idle-lock']) || 0;
-  const unlocks = (await chrome.declarativeNetRequest.getSessionRules()).filter(r => r.action?.type === 'allow');
-
-  if (minutes > 0) {
-    chrome.idle.setDetectionInterval(idleSeconds(minutes));
-  }
-  if (minutes > 0 && unlocks.length) {
-    if (!(await chrome.alarms.get('idle.check'))) {
-      chrome.alarms.create('idle.check', {periodInMinutes: 0.5});
+  if (reload) {
+    const res = drop.map(ruleRegExp).filter(Boolean);
+    for (const tab of await chrome.tabs.query({discarded: false, url: ['http://*/*', 'https://*/*']})) {
+      if (res.some(re => re.test(tab.url))) {
+        chrome.tabs.reload(tab.id);
+      }
     }
   }
-  else {
-    await chrome.alarms.clear('idle.check');
-  }
+  await idleWatch(unlocks.length > drop.length);
 };
-idleWatch();
-
-chrome.idle.onStateChanged.addListener(state => {
-  if (state !== 'active') {
-    idleLock(state);
-  }
-});
-chrome.storage.onChanged.addListener(ps => {
-  if (ps['idle-lock']) {
-    idleWatch();
-  }
-});
 
 /* messaging */
 chrome.runtime.onMessage.addListener((request, sender, response) => {
@@ -418,33 +361,25 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
   }
   else if (request.method === 'open-once') {
     chrome.storage.local.get({
-      'timeout': 60, // seconds; default unlock duration
+      'unlock-default': 1, // minutes | 'tab' | 'session' (settings page, "Lock")
+      'timeout': 60, // seconds; legacy default unlock duration
       'no-password-on-unlock': false,
       'sha256': '', // sha256 hash code of the user password
       'password': '' // deprecated
     }).then(prefs => {
-      // normalize the requested unlock mode; fall back to the configured seconds
+      // the lock screen sends no mode: use the "stay unlocked for" setting,
+      // then the legacy seconds
+      const def = prefs['unlock-default'];
       let mode = request.mode;
-      if (!mode || (mode.type === 'for' && (!mode.seconds || mode.seconds < 1))) {
+      if (!mode) {
+        mode = (def === 'tab' || def === 'session') ? {type: def} : {type: 'for', seconds: Number(def) * 60};
+      }
+      if (mode.type === 'for' && !(mode.seconds >= 1)) {
         mode = {type: 'for', seconds: prefs.timeout};
       }
       const next = async () => {
         try {
           await openOnce({host: request.host, mode});
-          // the lock screen's "lock again when idle" cards and "make this my
-          // default" box only take effect once the password has been accepted
-          const changes = {};
-          if (Number.isFinite(request.idle) && request.idle >= 0) {
-            changes['idle-lock'] = request.idle;
-          }
-          if (request.remember && (mode.type === 'tab' || mode.type === 'session')) {
-            changes['unlock-default'] = mode.type;
-          }
-          else if (request.remember && mode.type === 'for') {
-            changes['unlock-default'] = Math.max(1, Math.round(mode.seconds / 60));
-          }
-          await chrome.storage.local.set(changes);
-          await idleWatch();
           response(true);
         }
         catch (e) {
@@ -495,39 +430,6 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
         // temporary "open once" unlocks now live in the session ruleset
         once: session.filter(r => r.action?.type === 'allow')
       });
-    });
-
-    return true;
-  }
-  else if (request.method === 'set-idle-lock') {
-    // a stricter value (shorter, or turning it on) applies straight away.
-    // A looser one (longer, or off) needs the master password when one is set.
-    chrome.storage.local.get({
-      'idle-lock': 0,
-      'sha256': '',
-      'password': ''
-    }).then(prefs => {
-      const value = Math.max(0, Number(request.minutes) || 0);
-      const current = Number(prefs['idle-lock']) || 0;
-      const looser = current > 0 && (value === 0 || value > current);
-      const apply = () => chrome.storage.local.set({'idle-lock': value}).then(() => response(true));
-
-      if (looser && (prefs.password || prefs.sha256)) {
-        prompt(translate('bg_msg_17')).then(password => {
-          if (password) {
-            sha256.validate({password}, apply, msg => {
-              response(false);
-              notify(msg || translate('bg_msg_2'));
-            });
-          }
-          else {
-            response(false);
-          }
-        });
-      }
-      else {
-        apply();
-      }
     });
 
     return true;
@@ -655,10 +557,6 @@ chrome.alarms.onAlarm.addListener(async alarm => {
   if (alarm.name.startsWith('release.once.')) {
     const id = Number(alarm.name.slice('release.once.'.length));
     await relock([id]);
-  }
-  else if (alarm.name === 'idle.check') {
-    await idleLock();
-    idleWatch(); // also stops polling when the user is active and no unlock is left
   }
   else if (alarm.name === 'release.open.once') { // legacy dynamic rule
     chrome.declarativeNetRequest.updateDynamicRules({

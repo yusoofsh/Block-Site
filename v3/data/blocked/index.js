@@ -1,4 +1,4 @@
-/* global tld, getRelativeTime, humanDuration */
+/* global tld, humanDuration */
 'use strict';
 
 const toast = document.getElementById('toast');
@@ -29,16 +29,6 @@ const args = new URLSearchParams(location.search);
 // "type=ipb" sends URIEncoded
 const href = /&url=\w+:\/\//.test(location.search) ? location.search.split('&url=')[1] : args.get('url');
 
-if (args.has('date')) {
-  let d = new Date(parseInt(args.get('date')));
-  if (isNaN(d)) {
-    d = new Date();
-    document.getElementById('date').textContent = d.toLocaleString();
-  }
-  else {
-    document.getElementById('date').textContent = getRelativeTime(d);
-  }
-}
 if (args.has('url')) {
   const o = new URL(href);
   o.domain = tld.getDomain(o.host);
@@ -51,73 +41,32 @@ if (args.has('url')) {
   else {
     document.getElementById('domain').textContent = o.host;
   }
-  document.getElementById('pathname').textContent = o.pathname;
+  document.getElementById('pathname').textContent = o.pathname === '/' ? '' : o.pathname;
   document.getElementById('search').textContent = o.search;
+  document.querySelector('.path').hidden = (o.pathname === '/' || !o.pathname) && !o.search;
 }
 
-// a quick-select card: <label class="choice"><input type="radio"><span class="card">
-const card = (parent, name, value, label, hint, extra = '') => {
-  const l = document.createElement('label');
-  l.className = 'choice ' + extra;
-  const input = document.createElement('input');
-  input.type = 'radio';
-  input.name = name;
-  input.value = value;
-  const span = document.createElement('span');
-  span.className = 'card';
-  const b = document.createElement('b');
-  b.textContent = label;
-  span.appendChild(b);
-  if (hint) {
-    const small = document.createElement('small');
-    small.textContent = hint;
-    span.appendChild(small);
-  }
-  l.append(input, span);
-  parent.appendChild(l);
-  return input;
-};
-const check = (name, value) => {
-  const input = document.querySelector(`input[name="${name}"][value="${value}"]`);
-  if (input) {
-    input.checked = true;
-  }
-  return Boolean(input);
-};
-
-// populate the "unlock for" and "lock again when idle" cards
-const IDLE_PRESETS = [0, 1, 5, 15, 30]; // minutes, 0 = off
+// the unlock behavior comes from the settings page ("Lock"). The lock
+// screen only asks for the password and says what will happen; the worker
+// picks the unlock mode from the same setting.
 chrome.storage.local.get({
-  'unlock-periods': [1, 5, 15, 60], // minutes
   'unlock-default': 1, // minutes | 'tab' | 'session'
-  'timeout': 60, // seconds (legacy fallback)
   'idle-lock': 0 // minutes, 0 = off
 }, prefs => {
-  const duration = document.getElementById('duration');
-  const periods = [...prefs['unlock-periods']].filter(n => Number.isFinite(n) && n > 0);
-  if (typeof prefs['unlock-default'] === 'number' && periods.includes(prefs['unlock-default']) === false) {
-    periods.push(prefs['unlock-default']);
-  }
-  [...new Set(periods)].sort((a, b) => a - b).forEach(min => {
-    card(duration, 'duration', 'for:' + (min * 60), humanDuration(min));
-  });
   const t = id => chrome.i18n.getMessage(id);
-  card(duration, 'duration', 'tab', t('blocked_unlock_tab_short'), t('blocked_unlock_tab_hint'));
-  card(duration, 'duration', 'session', t('blocked_unlock_session_short'), t('blocked_unlock_session_hint'));
-  card(duration, 'duration', 'permanent', t('blocked_unlock_permanent_short'), t('blocked_unlock_permanent_hint'),
-    'danger');
-
   const def = prefs['unlock-default'];
-  check('duration', (def === 'tab' || def === 'session') ? def : 'for:' + (Number(def) * 60)) ||
-    check('duration', 'for:' + prefs.timeout) ||
-    duration.querySelector('input')?.click();
-
-  const idle = document.getElementById('idle');
-  const current = Math.max(0, Number(prefs['idle-lock']) || 0);
-  [...new Set([...IDLE_PRESETS, current])].sort((a, b) => a - b).forEach(min => {
-    card(idle, 'idle', min, min ? t('idle_min').replace('##', min) : t('idle_off'));
-  });
-  check('idle', current);
+  const parts = [];
+  if (def === 'tab' || def === 'session') {
+    parts.push(t(def === 'tab' ? 'blocked_info_tab' : 'blocked_info_session'));
+  }
+  else if (Number(def) > 0) {
+    parts.push(t('blocked_info_for').replace('##', humanDuration(Number(def))));
+  }
+  const idle = Number(prefs['idle-lock']) || 0;
+  if (idle > 0) {
+    parts.push(t('blocked_info_idle').replace('##', idle));
+  }
+  document.getElementById('info').textContent = parts.join(' · ');
 });
 
 // the site (registrable domain, subdomains included) an unlock applies to
@@ -130,26 +79,9 @@ catch (e) {}
 
 document.addEventListener('submit', e => {
   e.preventDefault();
-  const choice = document.querySelector('input[name=duration]:checked')?.value || '';
-  const idle = document.querySelector('input[name=idle]:checked');
-  // "permanent" reuses the existing remove-blocking / add-to-whitelist logic
-  if (choice === 'permanent') {
-    document.getElementById('exception').click();
-    return;
-  }
-  let mode;
-  if (choice === 'tab' || choice === 'session') {
-    mode = {type: choice};
-  }
-  else {
-    mode = {type: 'for', seconds: parseInt(choice.split(':')[1], 10)};
-  }
   post({
     method: 'open-once',
     host: unlockHost,
-    mode,
-    idle: idle ? Number(idle.value) : undefined,
-    remember: document.getElementById('remember').checked,
     password: e.target.querySelector('[type=password]')?.value || ''
   }, b => {
     if (b) {
@@ -178,18 +110,10 @@ document.getElementById('options').addEventListener('click', e => {
   chrome.runtime.openOptionsPage();
 });
 
-const title = () => fetch(href, {
-  credentials: 'omit'
-}).then(r => r.text()).then(content => {
-  const dom = new DOMParser().parseFromString(content, 'text/html');
-  document.getElementById('title').textContent = dom.title || 'Unknown';
-}).catch(() => document.getElementById('title').textContent = 'Unknown');
-
 // storage
 Promise.all([
   new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve)),
   chrome.storage.local.get({
-    'title': true,
     'close': 0,
     'message': '',
     'css': '',
@@ -206,13 +130,6 @@ Promise.all([
     return prefs;
   })
 ]).then(a => a[1]).then(prefs => {
-  if (prefs.title && href) {
-    title();
-  }
-  else {
-    document.getElementById('title-label').hidden = true;
-    document.getElementById('title').hidden = true;
-  }
   // the master password is optional (https://github.com/ray-lothian/Block-Site/issues/42).
   const hasPassword = prefs.password || prefs.sha256;
   const unlockNeedsPassword = hasPassword && !prefs['no-password-on-unlock'];
@@ -230,17 +147,12 @@ Promise.all([
     const h = args.get('host');
     const o = prefs.notes[h] || {};
 
-    const ruleEl = document.getElementById('rule');
-    ruleEl.hidden = false;
-    document.getElementById('rule-label').hidden = false;
-    ruleEl.textContent = h;
-
     if (o.note) {
       document.getElementById('message').textContent = o.note;
     }
 
+    // the popup lists how often each rule blocked a page
     const count = (o.count || 0) + 1;
-    document.getElementById('counter').textContent = count;
     chrome.storage.local.set({
       notes: {
         ...prefs.notes,

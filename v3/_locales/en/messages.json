@@ -17,23 +17,11 @@
   "options_custom_css": {
     "message": "Custom CSS:"
   },
-  "options_resolve": {
-    "message": "Resolve the title of blocked pages (uncheck this option to prevent blocked servers from receiving any request)"
-  },
   "options_startup": {
     "message": "Perform blocking on existing pages after initialization"
   },
   "options_startup_current": {
     "message": "Block the current matched page when a new rule is added"
-  },
-  "options_allow_access": {
-    "message": "Default access time for the unblocked hostname (in seconds)"
-  },
-  "options_unlock_periods": {
-    "message": "Unlock durations offered on the blocked page (in minutes)"
-  },
-  "options_unlock_default": {
-    "message": "Preselected unlock duration on the blocked page"
   },
   "options_block_period": {
     "message": "Block password check when wrong password is entered multiple times (in minutes)"
@@ -222,7 +210,7 @@
     "message": "Simple"
   },
   "options_intro": {
-    "message": "To save options or set a master password, scroll down. If you're new, block new websites by visiting the page and clicking the action button (it's in the extensions menu after installation). No need to manually make new rules."
+    "message": "To save options or set a master password, use the bar at the bottom of the page. If you're new, block new websites by visiting the page and clicking the action button (it's in the extensions menu after installation). No need to manually make new rules."
   },
   "options_sch_helper_1": {
     "message": "Generate unblocking periods for the following blocked hours"
@@ -296,44 +284,8 @@
   "blocked_restricted": {
     "message": "Restricted Access"
   },
-  "blocked_title": {
-    "message": "Title"
-  },
-  "blocked_since": {
-    "message": "Blocked Since"
-  },
-  "blocked_counter": {
-    "message": "Blocked Count"
-  },
-  "blocked_rule": {
-    "message": "Blocking Rule"
-  },
-  "blocked_rule_ph": {
-    "message": "Blocking rule (edit to change the scope)"
-  },
-  "blocked_note": {
-    "message": "Note"
-  },
-  "blocked_note_ph": {
-    "message": "Add a note for this site…"
-  },
-  "blocked_master_password": {
-    "message": "Enter the master password, then press enter to unblock"
-  },
   "blocked_unlock": {
     "message": "Unlock"
-  },
-  "blocked_unlock_duration": {
-    "message": "Choose how long to unlock this site"
-  },
-  "blocked_unlock_tab": {
-    "message": "While tabs of this site are open"
-  },
-  "blocked_unlock_session": {
-    "message": "For this browser session"
-  },
-  "blocked_unlock_permanent": {
-    "message": "Permanently (remove the rule)"
   },
   "blocked_options": {
     "message": "Options Page"
@@ -443,15 +395,6 @@
   "pp_msg_1": {
     "message": "opened from '##'"
   },
-  "blocked_locked_hint": {
-    "message": "This site is locked. Choose how long to open it, then enter your password."
-  },
-  "blocked_unlock_for": {
-    "message": "Unlock for"
-  },
-  "blocked_unlock_for_hint": {
-    "message": "Then it locks again"
-  },
   "blocked_unlock_tab_short": {
     "message": "While tab is open"
   },
@@ -464,26 +407,8 @@
   "blocked_unlock_session_hint": {
     "message": "Until the browser closes"
   },
-  "blocked_unlock_permanent_short": {
-    "message": "Permanently"
-  },
-  "blocked_unlock_permanent_hint": {
-    "message": "Stops blocking this site"
-  },
-  "blocked_idle_lock": {
-    "message": "Lock again when idle"
-  },
-  "blocked_idle_lock_hint": {
-    "message": "Applies to every unlocked site. Idle means no keyboard or mouse input."
-  },
   "blocked_password_ph": {
     "message": "Master password"
-  },
-  "blocked_remember": {
-    "message": "Make this my default"
-  },
-  "blocked_details": {
-    "message": "Details"
   },
   "idle_off": {
     "message": "Off"
@@ -500,9 +425,6 @@
   "options_idle_custom": {
     "message": "Custom (minutes)"
   },
-  "popup_idle_lock": {
-    "message": "Auto-lock when idle"
-  },
   "popup_lock_now": {
     "message": "Lock all now"
   },
@@ -511,5 +433,86 @@
   },
   "options_unlock_header": {
     "message": "Unlocking"
+  },
+  "settings_nav_sites": {
+    "message": "Sites"
+  },
+  "settings_nav_lock": {
+    "message": "Lock"
+  },
+  "settings_nav_schedule": {
+    "message": "Schedule"
+  },
+  "settings_nav_blocking": {
+    "message": "Blocking"
+  },
+  "settings_nav_page": {
+    "message": "Blocked page"
+  },
+  "settings_nav_backup": {
+    "message": "Backup"
+  },
+  "settings_sites_desc": {
+    "message": "Choose which websites are blocked."
+  },
+  "settings_lock_desc": {
+    "message": "How long a site stays open after you unlock it, when it locks again, and how the password is used."
+  },
+  "settings_schedule_desc": {
+    "message": "Open blocked sites automatically during set hours."
+  },
+  "settings_blocking_desc": {
+    "message": "Fine-tune when and where blocking applies."
+  },
+  "settings_page_desc": {
+    "message": "Customize what you see when a site is blocked."
+  },
+  "settings_backup_desc": {
+    "message": "Export, import and support the extension."
+  },
+  "settings_unlock_for": {
+    "message": "Stay unlocked for"
+  },
+  "settings_unlock_for_hint": {
+    "message": "How long a site stays open after you enter the password."
+  },
+  "settings_import_txt_hint": {
+    "message": "A plain text file with one rule per line."
+  },
+  "settings_group_behavior": {
+    "message": "Behavior"
+  },
+  "settings_group_menu": {
+    "message": "Context menu"
+  },
+  "settings_group_interface": {
+    "message": "Interface"
+  },
+  "settings_group_content": {
+    "message": "Content"
+  },
+  "settings_dismiss": {
+    "message": "Dismiss"
+  },
+  "popup_autolock_on": {
+    "message": "Auto-lock: ## min idle"
+  },
+  "popup_autolock_off": {
+    "message": "Auto-lock: off"
+  },
+  "blocked_locked_title": {
+    "message": "This site is locked"
+  },
+  "blocked_info_for": {
+    "message": "Unlocks for ##"
+  },
+  "blocked_info_tab": {
+    "message": "Unlocks while this tab is open"
+  },
+  "blocked_info_session": {
+    "message": "Unlocks until the browser closes"
+  },
+  "blocked_info_idle": {
+    "message": "Locks again after ## min idle"
   }
 }

@@ -17,17 +17,11 @@
   "options_custom_css": {
     "message": "Custom CSS:"
   },
-  "options_resolve": {
-    "message": "Resolve the title of blocked pages (uncheck this option to prevent blocked servers from receiving any request)"
-  },
   "options_startup": {
     "message": "Perform blocking on existing pages after initialization"
   },
   "options_startup_current": {
     "message": "Block the current matched page when a new rule is added"
-  },
-  "options_allow_access": {
-    "message": "Allow access to the unblocked hostname for (in seconds)"
   },
   "options_block_period": {
     "message": "Block password check when wrong password is entered multiple times (in minutes)"
@@ -208,15 +202,6 @@
   },
   "blocked_restricted": {
     "message": "גישה מוגבלת"
-  },
-  "blocked_title": {
-    "message": "כותרת"
-  },
-  "blocked_since": {
-    "message": "חסום מאז"
-  },
-  "blocked_master_password": {
-    "message": "Enter the master password, then press enter to unblock for a minute"
   },
   "blocked_options": {
     "message": "עמוד אפשרויות"

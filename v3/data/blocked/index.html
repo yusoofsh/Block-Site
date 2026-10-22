@@ -12,67 +12,45 @@
 </head>
 <body>
   <main>
-    <section class="lock panel">
+    <div class="lock">
       <div class="badge" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2"
+        <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8"
           stroke-linecap="round" stroke-linejoin="round">
-          <rect x="4" y="11" width="16" height="10" rx="2.5"/>
-          <path d="M8 11V7.5a4 4 0 0 1 8 0V11"/>
-          <circle cx="12" cy="16" r="1.2" fill="currentColor"/>
+          <rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/>
+          <path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/>
+          <circle cx="12" cy="15.5" r="1.1" fill="currentColor"/>
         </svg>
       </div>
-      <h1 data-i18n="blocked_restricted"></h1>
-      <a id="url" href="">
-        <span id="sub-domain"></span><span id="domain">...</span><span id="pathname"></span><span id="search"></span>
-      </a>
+      <p class="eyebrow" data-i18n="blocked_locked_title"></p>
+      <h1>
+        <a id="url" href="">
+          <span id="sub-domain"></span><span id="domain">...</span>
+          <span class="path"><span id="pathname"></span><span id="search"></span></span>
+        </a>
+      </h1>
       <p id="message"></p>
 
       <form>
-        <p class="hint" data-i18n="blocked_locked_hint"></p>
-        <fieldset>
-          <legend data-i18n="blocked_unlock_for"></legend>
-          <div class="choices" id="duration" role="radiogroup"
-            data-i18n="blocked_unlock_duration" data-i18n-value="title"></div>
-        </fieldset>
-        <fieldset>
-          <legend data-i18n="blocked_idle_lock"></legend>
-          <div class="choices compact" id="idle" role="radiogroup"></div>
-          <small class="fine" data-i18n="blocked_idle_lock_hint"></small>
-        </fieldset>
-        <label class="remember">
-          <input type="checkbox" id="remember" class="toggle">
-          <span data-i18n="blocked_remember"></span>
-        </label>
-        <div class="unlock-row">
+        <div class="field">
           <input type="password" required="true" autocomplete="off"
             data-i18n="blocked_password_ph" data-i18n-value="placeholder">
-          <button type="submit" id="unlock" class="btn-primary" data-i18n="blocked_unlock"></button>
+          <button type="submit" id="unlock" class="btn-primary">
+            <span data-i18n="blocked_unlock"></span>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
         </div>
+        <p id="info"></p>
       </form>
-
-      <details id="details">
-        <summary data-i18n="blocked_details"></summary>
-        <dl>
-          <dt data-i18n="blocked_title" id="title-label"></dt>
-          <dd id="title">...</dd>
-          <dt data-i18n="blocked_rule" id="rule-label" hidden></dt>
-          <dd id="rule" data-i18n="blocked_rule_ph" data-i18n-value="placeholder" hidden></dd>
-          <dt data-i18n="blocked_since"></dt>
-          <dd id="date"></dd>
-          <dt data-i18n="blocked_counter"></dt>
-          <dd id="counter"></dd>
-          <dt data-i18n="blocked_note" id="note-label" hidden></dt>
-          <dd><textarea id="note" rows="2" data-i18n="blocked_note_ph" data-i18n-value="placeholder" hidden></textarea></dd>
-        </dl>
-      </details>
-    </section>
+    </div>
 
     <footer>
+      <a href="#" id="options" data-i18n="blocked_options"></a>
       <a href="#" id="rate" data-i18n="blocked_rate" data-hide=true>-</a>
       <a href="#" id="exception">-</a>
-      <a href="#" id="options" data-i18n="blocked_options"></a>
     </footer>
   </main>
+
   <notification-view id="toast"></notification-view>
   <button type="button" id="switch" class="btn-ghost" title="Theme" aria-label="Theme">
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
