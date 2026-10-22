@@ -55,39 +55,70 @@ if (args.has('url')) {
   document.getElementById('search').textContent = o.search;
 }
 
-// populate the "unlock duration" chooser
-{
-  const sel = document.getElementById('duration');
-  chrome.storage.local.get({
-    'unlock-periods': [1, 5, 15, 60], // minutes
-    'unlock-default': 1, // minutes | 'tab' | 'session'
-    'timeout': 60 // seconds (legacy fallback)
-  }, prefs => {
-    const add = (value, label) => {
-      const o = document.createElement('option');
-      o.value = value;
-      o.textContent = label;
-      sel.appendChild(o);
-    };
-    const periods = [...prefs['unlock-periods']].filter(n => Number.isFinite(n) && n > 0);
-    if (typeof prefs['unlock-default'] === 'number' && periods.includes(prefs['unlock-default']) === false) {
-      periods.push(prefs['unlock-default']);
-    }
-    [...new Set(periods)].sort((a, b) => a - b).forEach(min => add('for:' + (min * 60), humanDuration(min)));
-    add('tab', chrome.i18n.getMessage('blocked_unlock_tab'));
-    add('session', chrome.i18n.getMessage('blocked_unlock_session'));
-    add('permanent', chrome.i18n.getMessage('blocked_unlock_permanent'));
+// a quick-select card: <label class="choice"><input type="radio"><span class="card">
+const card = (parent, name, value, label, hint, extra = '') => {
+  const l = document.createElement('label');
+  l.className = 'choice ' + extra;
+  const input = document.createElement('input');
+  input.type = 'radio';
+  input.name = name;
+  input.value = value;
+  const span = document.createElement('span');
+  span.className = 'card';
+  const b = document.createElement('b');
+  b.textContent = label;
+  span.appendChild(b);
+  if (hint) {
+    const small = document.createElement('small');
+    small.textContent = hint;
+    span.appendChild(small);
+  }
+  l.append(input, span);
+  parent.appendChild(l);
+  return input;
+};
+const check = (name, value) => {
+  const input = document.querySelector(`input[name="${name}"][value="${value}"]`);
+  if (input) {
+    input.checked = true;
+  }
+  return Boolean(input);
+};
 
-    const def = prefs['unlock-default'];
-    sel.value = (def === 'tab' || def === 'session') ? def : 'for:' + (Number(def) * 60);
-    if (sel.selectedIndex < 0) {
-      sel.value = 'for:' + prefs.timeout;
-    }
-    if (sel.selectedIndex < 0 && sel.options.length) {
-      sel.selectedIndex = 0;
-    }
+// populate the "unlock for" and "lock again when idle" cards
+const IDLE_PRESETS = [0, 1, 5, 15, 30]; // minutes, 0 = off
+chrome.storage.local.get({
+  'unlock-periods': [1, 5, 15, 60], // minutes
+  'unlock-default': 1, // minutes | 'tab' | 'session'
+  'timeout': 60, // seconds (legacy fallback)
+  'idle-lock': 0 // minutes, 0 = off
+}, prefs => {
+  const duration = document.getElementById('duration');
+  const periods = [...prefs['unlock-periods']].filter(n => Number.isFinite(n) && n > 0);
+  if (typeof prefs['unlock-default'] === 'number' && periods.includes(prefs['unlock-default']) === false) {
+    periods.push(prefs['unlock-default']);
+  }
+  [...new Set(periods)].sort((a, b) => a - b).forEach(min => {
+    card(duration, 'duration', 'for:' + (min * 60), humanDuration(min));
   });
-}
+  const t = id => chrome.i18n.getMessage(id);
+  card(duration, 'duration', 'tab', t('blocked_unlock_tab_short'), t('blocked_unlock_tab_hint'));
+  card(duration, 'duration', 'session', t('blocked_unlock_session_short'), t('blocked_unlock_session_hint'));
+  card(duration, 'duration', 'permanent', t('blocked_unlock_permanent_short'), t('blocked_unlock_permanent_hint'),
+    'danger');
+
+  const def = prefs['unlock-default'];
+  check('duration', (def === 'tab' || def === 'session') ? def : 'for:' + (Number(def) * 60)) ||
+    check('duration', 'for:' + prefs.timeout) ||
+    duration.querySelector('input')?.click();
+
+  const idle = document.getElementById('idle');
+  const current = Math.max(0, Number(prefs['idle-lock']) || 0);
+  [...new Set([...IDLE_PRESETS, current])].sort((a, b) => a - b).forEach(min => {
+    card(idle, 'idle', min, min ? t('idle_min').replace('##', min) : t('idle_off'));
+  });
+  check('idle', current);
+});
 
 // the site (registrable domain, subdomains included) an unlock applies to
 let unlockHost = '';
@@ -99,7 +130,8 @@ catch (e) {}
 
 document.addEventListener('submit', e => {
   e.preventDefault();
-  const choice = document.getElementById('duration').value;
+  const choice = document.querySelector('input[name=duration]:checked')?.value || '';
+  const idle = document.querySelector('input[name=idle]:checked');
   // "permanent" reuses the existing remove-blocking / add-to-whitelist logic
   if (choice === 'permanent') {
     document.getElementById('exception').click();
@@ -116,6 +148,8 @@ document.addEventListener('submit', e => {
     method: 'open-once',
     host: unlockHost,
     mode,
+    idle: idle ? Number(idle.value) : undefined,
+    remember: document.getElementById('remember').checked,
     password: e.target.querySelector('[type=password]')?.value || ''
   }, b => {
     if (b) {
@@ -124,10 +158,14 @@ document.addEventListener('submit', e => {
   });
 });
 
+// theme toggle: flips whatever is showing now (the system theme by default)
 document.getElementById('switch').addEventListener('click', () => {
-  const val = document.documentElement.classList.contains('dark') === false;
-  localStorage.setItem('dark', val);
-  document.documentElement.classList[val ? 'add' : 'remove']('dark');
+  const root = document.documentElement;
+  const dark = root.classList.contains('dark') ||
+    (root.classList.contains('light') === false && matchMedia('(prefers-color-scheme: dark)').matches);
+  localStorage.setItem('dark', !dark);
+  root.classList.toggle('dark', !dark);
+  root.classList.toggle('light', dark);
 });
 document.getElementById('options').addEventListener('click', e => {
   e.stopPropagation();
@@ -170,6 +208,10 @@ Promise.all([
 ]).then(a => a[1]).then(prefs => {
   if (prefs.title && href) {
     title();
+  }
+  else {
+    document.getElementById('title-label').hidden = true;
+    document.getElementById('title').hidden = true;
   }
   // the master password is optional (https://github.com/ray-lothian/Block-Site/issues/42).
   const hasPassword = prefs.password || prefs.sha256;

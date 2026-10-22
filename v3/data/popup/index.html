@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/data/theme.css">
   <link rel="stylesheet" href="index.css">
   <title>Block Site</title>
 </head>
@@ -15,6 +16,14 @@
   <div id="actions">
     <input type="button" id="mode" value="">
     <input type="button" id="options" data-i18n="popup_options_page" data-i18n-value="value">
+  </div>
+  <div id="unlocked" hidden>
+    <span id="unlocked-count"></span>
+    <button type="button" class="btn btn-primary" id="lock-now" data-i18n="popup_lock_now"></button>
+  </div>
+  <div id="autolock">
+    <span id="idle-label" data-i18n="popup_idle_lock"></span>
+    <div class="choices compact" id="idle" role="radiogroup" aria-labelledby="idle-label"></div>
   </div>
   <input type="search" id="filter" data-i18n="popup_filter" data-i18n-value="placeholder">
   <div id="list"></div>

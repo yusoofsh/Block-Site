@@ -1,202 +1,228 @@
 html {
-  --bg: #e1e1e1;
-  --input-bg: #fff;
-  --fg: #4e4e4e;
-  --input-fg: #4e4e4e;
-  --a-fg: #006cc3;
-
   height: 100%;
-  color-scheme: light;
-}
-html.dark {
-  --bg: #222837;
-  --input-bg: #363c4b;
-  --fg: #c7c7c7;
-  --input-fg: #d0d0d0;
-  --a-fg: #90bbde;
-
-  color-scheme: darl;
 }
 
 body {
+  margin: 0;
+  min-height: 100%;
+  display: flex;
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--fg);
+  background:
+    radial-gradient(ellipse at top, var(--accent-soft), transparent 60%),
+    var(--bg);
+}
+
+main {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  margin: 0;
-  font-family: "Helvetica Neue", Helvetica, sans-serif;
-  font-size: 13px;
-  color: var(--fg);
-  background: var(--bg) url('images/blocked.svg') center center no-repeat;
-  background-size: min(80vw, 50vh);
-  height: 100%;
-}
-
-html.dark body {
-  background-blend-mode: luminosity;
-}
-
-@media screen and (max-height: 400px) {
-  html.complete body {
-    background-image: none !important;
-  }
-}
-
-header h1 {
-  text-align: center;
-  font-weight: normal;
-}
-header > div {
-  display: grid;
-  grid-template-columns: min-content 1fr;
-  grid-gap: 10px 30px;
-}
-header > div > span:nth-child(odd) {
-  white-space: nowrap;
-}
-header,
-footer,
-p {
-  padding: 10px;
-}
-#rate::after {
-  content: '•';
-  padding: 0 5px;
-}
-/* the "remove blocking" link is replaced by the "Permanent" unlock option */
-#exception {
-  display: none;
-}
-#rate[data-hide=true] {
-  display: none;
-}
-
-footer {
-  display: grid;
-  grid-template-columns: 1fr min-content;
   align-items: center;
-  grid-gap: 10px;
-}
-footer > div {
-  display: grid;
-  grid-template-columns: repeat(3, min-content);
-  justify-content: end;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-@media screen and (max-width: 600px) {
-  footer {
-    grid-template-columns: 1fr;
-  }
-}
-
-input[type=text],
-input[type=password] {
-  outline: none;
-  min-width: 150px;
-  color: var(--input-fg);
-  background-color: var(--input-bg);
-  border: none;
-  width: 50%;
+  justify-content: center;
+  gap: 14px;
+  padding: 32px 16px;
   box-sizing: border-box;
-  padding: 10px;
 }
 
-footer input[type=password] {
+.lock {
   width: 100%;
+  max-width: 600px;
   box-sizing: border-box;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
-footer form {
-  gap: 8px;
+.badge {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  color: var(--accent);
+  background: var(--accent-soft);
 }
-footer form input[type=password] {
-  flex: 1;
-  width: auto;
-  min-width: 100px;
-}
-footer #duration,
-footer input[type=submit] {
-  color: var(--input-fg);
-  background-color: var(--input-bg);
-  border: none;
-  padding: 10px;
-  box-sizing: border-box;
-}
-footer input[type=submit] {
-  cursor: pointer;
+
+h1 {
+  margin: 14px 0 4px;
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
 }
 
 a {
+  color: var(--accent);
   text-decoration: none;
-  color: var(--a-fg);
 }
 
 #url {
   display: flex;
-  align-items: end;
   flex-wrap: wrap;
+  justify-content: center;
+  max-width: 100%;
   overflow: hidden;
+  color: var(--muted);
 }
 #domain {
-  font-weight: bold;
-  font-size: 120%;
+  color: var(--fg);
+  font-weight: 650;
 }
-#sub-domain,
 #pathname,
 #search {
-  opacity: 0.7;
-}
-#search,
-#pathname {
-  text-overflow: ellipsis;
+  max-width: 260px;
   overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
-}
-#switch {
-  position: absolute;
-  top: 0;
-  right: 0;
-  background: url('images/button_on.svg') no-repeat center center;
-  background-size: 32px;
-  width: 64px;
-  height: 48px;
-  cursor: pointer;
-  border: none;
-  outline: none;
-}
-html.dark #switch {
-  background-image: url('images/button_off.svg');
 }
 
 #message {
-  white-space: pre;
-  overflow: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--input-bg) var(--bg);
+  margin: 12px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+#message:empty {
+  display: none;
 }
 
-[hbox] {
-  display: flex;
-  flex-direction: row;
-}
-[vbox] {
+form {
+  width: 100%;
+  margin-top: 22px;
   display: flex;
   flex-direction: column;
+  gap: 18px;
+  text-align: start;
 }
-[flex="1"] {
-  flex: 1;
+.hint {
+  margin: 0;
+  color: var(--muted);
+  text-align: center;
 }
-[align=center] {
+fieldset {
+  margin: 0;
+  padding: 0;
+  border: none;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+legend {
+  padding: 0;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+.fine {
+  color: var(--muted);
+  font-size: 12px;
+}
+.remember {
+  display: flex;
   align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+.unlock-row {
+  display: flex;
+  gap: 8px;
+}
+.unlock-row input[type=password] {
+  flex: 1;
+  min-width: 0;
 }
 
-html.simple header h1,
-html.simple header table,
-html.simple footer {
-  display: none !important;
+details {
+  width: 100%;
+  margin-top: 22px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  text-align: start;
+}
+summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 13px;
+}
+dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 18px;
+  margin: 12px 0 0;
+  font-size: 13px;
+}
+dt {
+  color: var(--muted);
+}
+dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+dt[hidden],
+dd[hidden],
+dd:has(> [hidden]:only-child) {
+  display: none;
+}
+
+footer {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+}
+footer a {
+  color: var(--muted);
+}
+footer a:hover {
+  color: var(--accent);
+}
+/* the "remove blocking" link is replaced by the "Permanently" unlock card */
+#exception,
+#rate[data-hide=true] {
+  display: none;
+}
+
+#switch {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  padding: 8px;
+  color: var(--muted);
 }
 
 #toast {
   z-index: 1;
+}
+
+@media (max-width: 480px) {
+  .lock {
+    padding: 22px 16px;
+  }
+  .unlock-row {
+    flex-direction: column;
+  }
+}
+
+/* "simple" mode: embedded frames and the optional minimal page view */
+html.simple main {
+  padding: 8px;
+}
+html.simple .lock {
+  padding: 16px;
+  box-shadow: none;
+}
+html.simple h1,
+html.simple form,
+html.simple details,
+html.simple footer,
+html.simple #switch {
+  display: none !important;
 }

@@ -1,4 +1,4 @@
-/* global getRelativeTime */
+/* global getRelativeTime, tld */
 'use strict';
 
 // localization
@@ -264,10 +264,69 @@ chrome.storage.onChanged.addListener(ps => {
   if (ps.blocked || ps.notes) {
     render();
   }
+  if (ps['idle-lock']) {
+    renderIdle();
+  }
 });
+
+// auto-lock when idle: radio cards for the common values plus the stored value when it is not one of them
+const IDLE_PRESETS = [0, 1, 5, 15, 30];
+const idleBox = document.getElementById('idle');
+const idleLabel = m => m ? chrome.i18n.getMessage('idle_min').replace('##', m) : chrome.i18n.getMessage('idle_off');
+
+const renderIdle = async () => {
+  const prefs = await chrome.storage.local.get({'idle-lock': 0});
+  const value = Math.max(0, Number(prefs['idle-lock']) || 0);
+  if (Number(idleBox.querySelector('input:checked')?.value) === value) {
+    return; // already showing it (keeps keyboard focus after our own change)
+  }
+  idleBox.textContent = '';
+  for (const m of [...new Set([...IDLE_PRESETS, value])].sort((a, b) => a - b)) {
+    const input = Object.assign(document.createElement('input'), {
+      type: 'radio',
+      name: 'idle-lock',
+      value: String(m),
+      checked: m === value
+    });
+    const card = document.createElement('span');
+    card.className = 'card';
+    card.appendChild(document.createElement('b')).textContent = idleLabel(m);
+    const label = document.createElement('label');
+    label.className = 'choice';
+    label.title = idleLabel(m);
+    label.append(input, card);
+    idleBox.appendChild(label);
+  }
+};
+// the worker asks for the master password when the change is looser, and answers false when it was refused
+idleBox.addEventListener('change', e => {
+  chrome.runtime.sendMessage({method: 'set-idle-lock', minutes: Number(e.target.value)}, ok => {
+    if (!ok) {
+      renderIdle(); // put the previous card back
+    }
+  });
+});
+renderIdle();
+
+// sites that are unlocked right now, with a one-click way to lock them all again
+const unlockedBox = document.getElementById('unlocked');
+const refreshUnlocked = async () => {
+  const rules = await send({method: 'get-rules'});
+  const count = rules?.once?.length || 0;
+  unlockedBox.hidden = count === 0;
+  document.getElementById('unlocked-count').textContent = chrome.i18n.getMessage('popup_unlocked_count')
+    .replace('##', count);
+};
+document.getElementById('lock-now').addEventListener('click', async () => {
+  await send({method: 'relock-all'});
+  refreshUnlocked();
+  warning();
+});
+refreshUnlocked();
 
 // is this site unblocked by a session rule
 const warning = async () => {
+  document.getElementById('warning').textContent = '';
   if (!currentTab || !currentTab.url) {
     return;
   }

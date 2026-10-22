@@ -442,5 +442,74 @@
   },
   "pp_msg_1": {
     "message": "opened from '##'"
+  },
+  "blocked_locked_hint": {
+    "message": "This site is locked. Choose how long to open it, then enter your password."
+  },
+  "blocked_unlock_for": {
+    "message": "Unlock for"
+  },
+  "blocked_unlock_for_hint": {
+    "message": "Then it locks again"
+  },
+  "blocked_unlock_tab_short": {
+    "message": "While tab is open"
+  },
+  "blocked_unlock_tab_hint": {
+    "message": "Until every tab of this site is closed"
+  },
+  "blocked_unlock_session_short": {
+    "message": "This session"
+  },
+  "blocked_unlock_session_hint": {
+    "message": "Until the browser closes"
+  },
+  "blocked_unlock_permanent_short": {
+    "message": "Permanently"
+  },
+  "blocked_unlock_permanent_hint": {
+    "message": "Stops blocking this site"
+  },
+  "blocked_idle_lock": {
+    "message": "Lock again when idle"
+  },
+  "blocked_idle_lock_hint": {
+    "message": "Applies to every unlocked site. Idle means no keyboard or mouse input."
+  },
+  "blocked_password_ph": {
+    "message": "Master password"
+  },
+  "blocked_remember": {
+    "message": "Make this my default"
+  },
+  "blocked_details": {
+    "message": "Details"
+  },
+  "idle_off": {
+    "message": "Off"
+  },
+  "idle_min": {
+    "message": "## min"
+  },
+  "options_idle_header": {
+    "message": "Auto-lock"
+  },
+  "options_idle_lock": {
+    "message": "Lock every unlocked site again after this much idle time (no keyboard or mouse input). This includes \"While tab is open\" unlocks."
+  },
+  "options_idle_custom": {
+    "message": "Custom (minutes)"
+  },
+  "popup_idle_lock": {
+    "message": "Auto-lock when idle"
+  },
+  "popup_lock_now": {
+    "message": "Lock all now"
+  },
+  "popup_unlocked_count": {
+    "message": "## unlocked"
+  },
+  "options_unlock_header": {
+    "message": "Unlocking"
   }
 }

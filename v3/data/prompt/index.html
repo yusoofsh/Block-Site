@@ -4,60 +4,61 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Prompt :: Block Site</title>
+  <link rel="stylesheet" href="/data/theme.css">
+  <style type="text/css">
+    * {
+      box-sizing: border-box;
+    }
+    html {
+      height: 100%;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      height: 100%;
+      margin: 0;
+      padding: 20px 24px;
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.4;
+      color: var(--fg);
+      background: var(--bg);
+    }
+    #message {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 600;
+      overflow-wrap: anywhere;
+    }
+    form {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 0;
+    }
+    #password {
+      width: 100%;
+    }
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: auto;
+    }
+    .actions input {
+      min-width: 96px;
+    }
+  </style>
 </head>
-<style type="text/css">
-  html {
-    height: 100%;
-    background-color: #fff;
-    color: #4d5156;
-  }
-  input {
-    background-color: #d9e4ec;
-    color: #4d5156;
-    border: none;
-    border-radius: 0;
-    padding: 10px;
-    margin-top: 10px;
-    outline: none;
-  }
-  input[type=submit],
-  input[type=button] {
-    cursor: pointer;
-    width: 100px;
-  }
-  input[type=submit]:disabled,
-  input[type=button]:disabled {
-    opacity: 0.2;
-    cursor: default;
-  }
-  body {
-    display: flex;
-    flex-direction: column;
-    font-family: "Helvetica Neue",Helvetica,sans-serif;
-    font-size: 13px;
-    margin: 10px;
-    height: calc(100% - 20px);
-  }
-  form {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-  }
-  #password {
-    flex: 1;
-    width: 100%;
-    box-sizing: border-box;
-  }
-</style>
 <body>
   <p id="message">Please enter the password</p>
   <form>
-    <div style="flex: 1;">
-      <input type="password" id="password" autofocus required>
-    </div>
-    <div style="text-align: right">
+    <input type="password" id="password" autofocus required>
+    <div class="actions">
       <input type="button" id="cancel" value="Cancel">
-      <input type="submit" id="ok" value="OK" disabled>
+      <input type="submit" id="ok" class="btn-primary" value="OK" disabled>
     </div>
   </form>
   <script src="index.js"></script>

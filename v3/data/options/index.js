@@ -30,6 +30,7 @@ const DEFAULTS = {
   'timeout': 60, // seconds; default unlock duration
   'unlock-periods': [1, 5, 15, 60], // minutes offered on the blocked page
   'unlock-default': 1, // minutes | 'tab' | 'session'
+  'idle-lock': 0, // minutes of inactivity before every unlock is locked again, 0 = off
   'close': 0, // seconds
   'message': '',
   'css': '',
@@ -212,33 +213,73 @@ const grant = callback => chrome.storage.local.get({
   }
 });
 
-// rebuild the "default unlock duration" dropdown from the periods list;
+// radio card: label.choice > input[type=radio] + span.card > b + small (see theme.css)
+const choice = (name, value, label, hint) => {
+  const input = Object.assign(document.createElement('input'), {type: 'radio', name, value: String(value)});
+  const card = document.createElement('span');
+  card.className = 'card';
+  card.appendChild(document.createElement('b')).textContent = label;
+  if (hint) {
+    card.appendChild(document.createElement('small')).textContent = hint;
+  }
+  const e = document.createElement('label');
+  e.className = 'choice';
+  e.append(input, card);
+  return e;
+};
+
+const UNLOCK_SPECIAL = [
+  ['tab', 'blocked_unlock_tab_short', 'blocked_unlock_tab_hint'],
+  ['session', 'blocked_unlock_session_short', 'blocked_unlock_session_hint']
+];
+
+// rebuild the "default unlock duration" cards from the periods list;
 // keeps the current (or a requested) selection when possible
 const rebuildUnlockDefault = desired => {
-  const sel = document.getElementById('unlock-default');
-  const keep = desired ?? sel.value;
+  const box = document.getElementById('unlock-default');
+  const keep = desired ?? box.querySelector('input:checked')?.value;
   const mins = document.getElementById('unlock-periods').value.split(/\s*,\s*/)
     .map(Number).filter(n => Number.isFinite(n) && n > 0);
   const uniq = [...new Set(mins)].sort((a, b) => a - b);
-  sel.textContent = '';
+  box.textContent = '';
   for (const m of uniq) {
-    const o = document.createElement('option');
-    o.value = String(m);
-    o.textContent = humanDuration(m);
-    sel.appendChild(o);
+    box.appendChild(choice('unlock-default', m, humanDuration(m)));
   }
-  for (const [value, key] of [['tab', 'blocked_unlock_tab'], ['session', 'blocked_unlock_session']]) {
-    const o = document.createElement('option');
-    o.value = value;
-    o.textContent = chrome.i18n.getMessage(key);
-    sel.appendChild(o);
+  for (const [value, label, hint] of UNLOCK_SPECIAL) {
+    box.appendChild(choice('unlock-default', value, chrome.i18n.getMessage(label), chrome.i18n.getMessage(hint)));
   }
-  sel.value = keep;
-  if (sel.selectedIndex < 0) {
-    sel.value = uniq.length ? String(uniq[0]) : 'tab';
-  }
+  const radios = [...box.querySelectorAll('input')];
+  // fall back to the first card (the shortest period, or "while tab is open")
+  (radios.find(r => r.value === keep) || radios[0]).checked = true;
 };
 document.getElementById('unlock-periods').addEventListener('input', () => rebuildUnlockDefault());
+
+// auto-lock: quick-select cards plus a custom number of minutes (0 = off).
+// A value that is not a preset leaves every card unchecked and lives in the number input.
+const IDLE_PRESETS = [0, 1, 5, 15, 30, 60];
+{
+  const box = document.getElementById('idle-lock');
+  for (const m of IDLE_PRESETS) {
+    const label = m ? chrome.i18n.getMessage('idle_min').replace('##', m) : chrome.i18n.getMessage('idle_off');
+    box.appendChild(choice('idle-lock', m, label));
+  }
+}
+const idleCustom = document.getElementById('idle-custom');
+const markIdle = value => {
+  for (const r of document.querySelectorAll('#idle-lock input')) {
+    r.checked = Number(r.value) === value;
+  }
+};
+const getIdle = () => Math.max(0, Number(idleCustom.value) || 0);
+const setIdle = minutes => {
+  const value = Math.max(0, Number(minutes) || 0);
+  idleCustom.value = value;
+  markIdle(value);
+};
+document.getElementById('idle-lock').addEventListener('change', e => {
+  idleCustom.value = e.target.value; // picking a card fills the input
+});
+idleCustom.addEventListener('input', () => markIdle(getIdle()));
 
 const init = (table = true) => chrome.storage.local.get(DEFAULTS, ps => {
   Object.assign(prefs, ps);
@@ -271,6 +312,7 @@ const init = (table = true) => chrome.storage.local.get(DEFAULTS, ps => {
   document.getElementById('timeout').value = prefs.timeout;
   document.getElementById('unlock-periods').value = prefs['unlock-periods'].join(', ');
   rebuildUnlockDefault(String(prefs['unlock-default']));
+  setIdle(prefs['idle-lock']);
   document.getElementById('close').value = prefs.close;
   document.getElementById('wrong').value = prefs.wrong;
   document.getElementById('message').value = prefs.message;
@@ -362,7 +404,7 @@ document.addEventListener('click', e => {
     if (unlockPeriods.length === 0) {
       unlockPeriods.push(1, 5, 15, 60);
     }
-    const udv = document.getElementById('unlock-default').value;
+    const udv = document.querySelector('#unlock-default input:checked')?.value;
     const unlockDefault = (udv === 'tab' || udv === 'session') ? udv : Math.max(Number(udv) || 1, 1);
 
     grant(async () => {
@@ -444,6 +486,7 @@ document.addEventListener('click', e => {
         'timeout': Math.max(Number(document.getElementById('timeout').value), 1),
         'unlock-periods': unlockPeriods,
         'unlock-default': unlockDefault,
+        'idle-lock': getIdle(),
         'close': Math.max(Number(document.getElementById('close').value), 0),
         'wrong': Math.max(Number(document.getElementById('wrong').value), 1),
         schedule,
