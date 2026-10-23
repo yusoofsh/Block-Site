@@ -112,18 +112,12 @@ const domainFor = url => {
 
 // show a worker error (like a wrong password) in the banner for a few seconds
 let errorTimer = 0;
-let bannerText = '';
 const showError = message => {
   const banner = document.getElementById('warning');
-  if (banner.classList.contains('error') === false) {
-    bannerText = banner.textContent; // what to restore, if any
-  }
   banner.textContent = message;
-  banner.classList.add('error');
   clearTimeout(errorTimer);
   errorTimer = setTimeout(() => {
-    banner.classList.remove('error');
-    banner.textContent = bannerText;
+    banner.textContent = '';
   }, 3000);
 };
 
@@ -304,34 +298,22 @@ document.getElementById('autolock').addEventListener('click', () => {
 });
 chrome.storage.local.get({'idle-lock': 0}, prefs => renderIdle(prefs['idle-lock']));
 
-// sites unlocked right now: how many, a one-click way to lock them all again,
-// and a warning when the current tab is one of them
+// sites unlocked right now: how many, and a one-click way to lock them all again
 const unlockedBox = document.getElementById('unlocked');
 const refreshUnlocked = async () => {
   const unlocks = (await chrome.declarativeNetRequest.getSessionRules()).filter(r => r.action?.type === 'allow');
   unlockedBox.hidden = unlocks.length === 0;
   document.getElementById('unlocked-count').textContent = chrome.i18n.getMessage('popup_unlocked_count')
     .replace('##', unlocks.length);
-
-  const url = currentTab?.url;
-  const here = Boolean(url) && unlocks.some(rule => {
-    try {
-      return new RegExp(rule.condition.regexFilter, 'i').test(url);
-    }
-    catch (e) {
-      return false;
-    }
-  });
-  document.getElementById('warning').textContent = here ? chrome.i18n.getMessage('bg_msg_31') : '';
 };
 document.getElementById('lock-now').addEventListener('click', async () => {
   await send({method: 'relock-all'});
   refreshUnlocked();
 });
+refreshUnlocked();
 
 chrome.tabs.query({active: true, currentWindow: true}, tabs => {
   currentTab = tabs && tabs[0];
   render();
-  refreshUnlocked();
 });
 

@@ -245,51 +245,76 @@ const choice = (name, value, label, hint) => {
   return e;
 };
 
-// minutes from "90", "1h", "1.5h", "2 hours", "45m", "1h 30m", "1h30", "1h30m" or "1:30" (h:mm);
-// whole minutes above zero, NaN for anything else
-const NUMBER = '(\\d+(?:\\.\\d+)?)';
-const HOURS_MINUTES = new RegExp(
-  `^(?:${NUMBER}\\s*(?:hours|hour|hrs|hr|h)\\s*)?(?:${NUMBER}\\s*(?:minutes|minute|mins|min|m)?)?$`
-);
-const parseDuration = text => {
-  // "1:30" reads as "1h30"
-  const t = String(text).trim().toLowerCase().replace(/^(\d+):([0-5]?\d)$/, '$1h$2');
-  const m = HOURS_MINUTES.exec(t);
-  if (!t || !m) {
-    return NaN;
-  }
-  return Math.round(Number(m[1] || 0) * 60 + Number(m[2] || 0)) || NaN;
+// hours and minutes in a box that looks like the schedule's time inputs. It is not a native type=time:
+// that is a time of day and shows AM/PM ("01:30 AM") for a duration of 90 minutes
+const duration = box => {
+  const segment = placeholder => Object.assign(document.createElement('input'), {
+    placeholder,
+    inputMode: 'numeric',
+    maxLength: 2,
+    autocomplete: 'off'
+  });
+  const unit = key => Object.assign(document.createElement('span'), {textContent: chrome.i18n.getMessage(key)});
+  const hours = segment('0');
+  const minutes = segment('00');
+  box.append(hours, unit('duration_hours'), minutes, unit('duration_minutes'));
+  // the same clock the time inputs show
+  box.insertAdjacentHTML('beforeend', '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+    '<circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>');
+
+  const pad = value => String(value).padStart(2, '0');
+  hours.addEventListener('input', () => {
+    hours.value = hours.value.replace(/\D/g, '');
+    if (hours.value.length === 2) {
+      minutes.focus();
+    }
+  });
+  minutes.addEventListener('input', () => {
+    minutes.value = minutes.value.replace(/\D/g, '');
+    if (Number(minutes.value) > 59) {
+      minutes.value = '59';
+    }
+  });
+  minutes.addEventListener('blur', () => {
+    if (minutes.value) {
+      minutes.value = pad(minutes.value);
+    }
+  });
+  box.addEventListener('keydown', e => {
+    const step = {ArrowUp: 1, ArrowDown: -1}[e.key];
+    if (step && (e.target === hours || e.target === minutes)) {
+      e.preventDefault();
+      const next = Math.min(e.target === hours ? 99 : 59, Math.max(0, (Number(e.target.value) || 0) + step));
+      e.target.value = e.target === hours ? next : pad(next);
+    }
+  });
+  box.addEventListener('focusin', e => e.target.select?.());
+  box.addEventListener('click', e => {
+    if (e.target.closest('input') === null) {
+      hours.focus();
+    }
+  });
+
+  return {
+    get: () => (Number(hours.value) || 0) * 60 + (Number(minutes.value) || 0),
+    set: total => {
+      hours.value = Math.floor(total / 60);
+      minutes.value = pad(total % 60);
+    },
+    focus: () => hours.focus()
+  };
 };
 
-// 90 -> "1h 30m", 45 -> "45m", 120 -> "2h"
-const formatDuration = minutes => {
-  const total = Math.max(1, Math.round(minutes));
-  const h = Math.floor(total / 60);
-  const m = total % 60;
-  return [h && h + 'h', m && m + 'm'].filter(Boolean).join(' ');
-};
-
-// quick-select cards plus a last "Custom" card. The custom row (a text field and a live line)
-// is only shown while that card is checked. Call it after the preset cards were added.
-// get() returns the minutes (or a named value like 'tab'), NaN when the custom text is invalid
-const presets = (box, custom) => {
-  const row = custom.closest('.row');
-  const live = row.querySelector('.live');
-  const invalidText = chrome.i18n.getMessage('custom_duration_invalid');
-  box.appendChild(choice(box.id, 'custom', chrome.i18n.getMessage('choice_custom')));
+// quick-select cards plus a last "Custom" card with a duration field. The field's row is only
+// shown while that card is checked. Call it after the preset cards were added.
+// get() returns the minutes (or a named value like 'tab'), NaN when Custom is 0
+const presets = (box, field, hint) => {
+  const row = field.closest('.row');
+  const custom = duration(field);
+  box.appendChild(choice(box.id, 'custom', chrome.i18n.getMessage('choice_custom'), hint));
 
   const refresh = () => {
-    const text = custom.value.trim();
-    const minutes = parseDuration(text);
-    const invalid = text !== '' && Number.isNaN(minutes);
     row.hidden = box.querySelector('input:checked')?.value !== 'custom';
-    custom.setCustomValidity(invalid ? invalidText : '');
-    if (text === '') {
-      live.textContent = chrome.i18n.getMessage('custom_duration_help');
-    }
-    else {
-      live.textContent = invalid ? invalidText : humanDuration(minutes);
-    }
   };
   box.addEventListener('change', e => {
     refresh();
@@ -297,27 +322,28 @@ const presets = (box, custom) => {
       custom.focus();
     }
   });
-  custom.addEventListener('input', refresh);
 
   return {
     get: () => {
       const value = box.querySelector('input:checked')?.value;
       if (value === 'custom') {
-        return parseDuration(custom.value);
+        return custom.get() || NaN;
       }
       return isNaN(value) ? value : Number(value);
     },
-    // a preset checks its card, any other number checks Custom and fills the text field
+    // a preset checks its card, any other number checks Custom and fills the field
     set: value => {
       const radios = [...box.querySelectorAll('input')];
       const radio = radios.find(r => r.value === String(value) && r.value !== 'custom');
       (radio || radios.find(r => r.value === 'custom')).checked = true;
-      custom.value = radio ? '' : formatDuration(value);
+      if (!radio) {
+        custom.set(value);
+      }
       refresh();
     },
     // bring the field into view, even when its page is not the visible one
     focus: () => {
-      openPage(custom.closest('section[data-page]').dataset.page);
+      openPage(row.closest('section[data-page]').dataset.page);
       custom.focus();
     }
   };
@@ -325,7 +351,7 @@ const presets = (box, custom) => {
 
 // unlock duration: minutes, or 'tab' (while the tab is open) or 'session'
 const unlockBox = document.getElementById('unlock-default');
-for (const m of [1, 5, 15, 60]) {
+for (const m of [1, 5, 60]) {
   unlockBox.appendChild(choice('unlock-default', m, humanDuration(m)));
 }
 for (const [value, label, hint] of [
@@ -334,7 +360,9 @@ for (const [value, label, hint] of [
 ]) {
   unlockBox.appendChild(choice('unlock-default', value, chrome.i18n.getMessage(label), chrome.i18n.getMessage(hint)));
 }
-const unlock = presets(unlockBox, document.getElementById('unlock-custom'));
+const unlock = presets(
+  unlockBox, document.getElementById('unlock-custom'), chrome.i18n.getMessage('choice_custom_hint')
+);
 // minutes are at least 1, 'tab' and 'session' pass through
 const setUnlock = value => unlock.set(isNaN(value) ? value : Math.max(Number(value) || 1, 1));
 

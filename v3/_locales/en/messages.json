@@ -3,7 +3,7 @@
     "message": "A customizable, password-protected website blocker and redirector."
   },
   "options_master_password": {
-    "message": "Master Password"
+    "message": "Password"
   },
   "options_master_password_comment": {
     "message": "Enter a master password to protect your preferences"
@@ -314,9 +314,6 @@
   "bg_msg_30": {
     "message": "Remove All Temporary Unblocking Rules"
   },
-  "bg_msg_31": {
-    "message": "This page is blocked, but a temporary rule allows visiting it."
-  },
   "bg_msg_32": {
     "message": "This site is temporarily unblocked by a session rule"
   },
@@ -393,7 +390,7 @@
     "message": "Until the browser closes"
   },
   "blocked_password_ph": {
-    "message": "Master password"
+    "message": "Password"
   },
   "idle_off": {
     "message": "Off"
@@ -500,13 +497,25 @@
   "choice_custom": {
     "message": "Custom"
   },
-  "custom_duration_ph": {
-    "message": "e.g. 1h 30m"
-  },
-  "custom_duration_help": {
-    "message": "Minutes, or hours and minutes: 90, 1h 30m, 1:30"
-  },
   "custom_duration_invalid": {
     "message": "Type minutes or hours, like 45, 2h or 1h 30m"
+  },
+  "choice_custom_hint": {
+    "message": "Set your own time"
+  },
+  "duration_hours": {
+    "message": "h"
+  },
+  "duration_minutes": {
+    "message": "min"
+  },
+  "blocked_reminder_question": {
+    "message": "Is this worth it right now?"
+  },
+  "blocked_reminder_open": {
+    "message": "Open anyway"
+  },
+  "blocked_reminder_back": {
+    "message": "Go back"
   }
 }

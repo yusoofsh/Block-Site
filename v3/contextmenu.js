@@ -1,4 +1,4 @@
-/* global translate, notify, sha256, userAction, openOnce, relock */
+/* global translate, notify, userAction, openOnce, relock, withPassword */
 
 const isFF = /Firefox/.test(navigator.userAgent);
 
@@ -203,21 +203,8 @@ Error: ${e.message}`);
       });
     };
 
-    const prefs = await chrome.storage.local.get({
-      'sha256': '',
-      'password': ''
-    });
-
-    if (prefs.password || prefs.sha256) {
-      prompt(translate('bg_msg_12')).then(password => {
-        if (password) {
-          sha256.validate({password}, resolve, notify);
-        }
-      });
-    }
-    else {
-      resolve();
-    }
+    // pausing one site is an unlock: it follows the lock screen's password rule
+    withPassword('unlock', 'bg_msg_12').then(allowed => allowed && resolve(), notify);
   }
   else if (info.menuItemId.startsWith('pause-')) {
     const resolve = async () => {
@@ -270,21 +257,8 @@ Error: ${e.message}`);
       }
     };
 
-    const prefs = await chrome.storage.local.get({
-      'sha256': '', // sha256 hash code of the user password
-      'password': '' // deprecated
-    });
-
-    if (prefs.password || prefs.sha256) {
-      prompt(translate('bg_msg_12')).then(password => {
-        if (password) {
-          sha256.validate({password}, resolve, notify);
-        }
-      });
-    }
-    else {
-      resolve();
-    }
+    // pausing all blocking always asks for the password
+    withPassword('pause', 'bg_msg_12').then(allowed => allowed && resolve(), notify);
   }
   else if (info.menuItemId === 'resume') {
     chrome.alarms.clear('release.pause');

@@ -129,16 +129,12 @@ body {
 .site:hover {
   background: var(--surface-2);
 }
-.warning.error {
-  color: var(--danger);
-  background: var(--danger-soft);
-  border-bottom-color: var(--danger);
-}
 .warning {
   text-align: center;
   padding: 10px 16px;
-  background-color: var(--warning-soft);
-  border-bottom: 1px solid var(--warning-border);
+  color: var(--danger);
+  background-color: var(--danger-soft);
+  border-bottom: 1px solid var(--danger);
 
   &:empty {
     display: none;
