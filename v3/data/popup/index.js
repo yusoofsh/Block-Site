@@ -1,4 +1,4 @@
-/* global tld */
+/* global tld, lockedUrl */
 'use strict';
 
 // localization
@@ -44,13 +44,7 @@ const covers = (rules, url) => rules.some(r => regExp(r.condition.regexFilter)?.
 const BLOCKED_BASE = chrome.runtime.getURL('/data/blocked/');
 const pageOf = tab => {
   const u = tab?.url || '';
-  if (u.startsWith(BLOCKED_BASE) === false) {
-    return {url: u, onBlockedPage: false};
-  }
-  // read it like the lock screen does: the raw address after "&url=", or the encoded one of an inline block
-  const {search} = new URL(u);
-  const url = /&url=\w+:\/\//.test(search) ? search.split('&url=')[1] : new URLSearchParams(search).get('url');
-  return {url: url || '', onBlockedPage: true};
+  return u.startsWith(BLOCKED_BASE) ? {url: lockedUrl(u), onBlockedPage: true} : {url: u, onBlockedPage: false};
 };
 const isWeb = url => /^https?:/.test(url);
 

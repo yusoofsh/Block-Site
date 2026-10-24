@@ -1,4 +1,4 @@
-/* global tld, humanDuration */
+/* global tld, humanDuration, lockedUrl */
 'use strict';
 
 const toast = document.getElementById('toast');
@@ -25,11 +25,9 @@ const post = (o, c = () => {}) => {
 };
 
 const args = new URLSearchParams(location.search);
-// do not use args.get('url'). It fails if the URL includes "&"
-// "type=ipb" sends URIEncoded
-const href = /&url=\w+:\/\//.test(location.search) ? location.search.split('&url=')[1] : args.get('url');
+const href = lockedUrl(location.href);
 
-if (args.has('url')) {
+if (href) {
   const o = new URL(href);
   o.domain = tld.getDomain(o.host);
 

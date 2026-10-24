@@ -45,3 +45,14 @@ function humanDuration(minutes) {
   }
   return parts.join(' ') || String(minutes);
 }
+
+// the address our lock screen stands for, read from its own url: the raw address after "&url=" (an address
+// can hold "&" itself, which URLSearchParams would cut), or the percent-encoded one an inline block sends
+// eslint-disable-next-line no-unused-vars
+function lockedUrl(href) {
+  const {search} = new URL(href);
+  if (/&url=\w+:\/\//.test(search)) {
+    return search.split('&url=')[1];
+  }
+  return new URLSearchParams(search).get('url') || '';
+}
