@@ -402,7 +402,7 @@
     "message": "Auto-lock"
   },
   "options_idle_lock": {
-    "message": "Lock every unlocked site again after this much idle time (no keyboard or mouse input). This includes \"While tab is open\" unlocks."
+    "message": "Lock every unlocked site again after this much idle time: no keyboard or mouse input and no video or other sound playing. This includes \"While tab is open\" unlocks."
   },
   "popup_lock_now": {
     "message": "Lock all now"
