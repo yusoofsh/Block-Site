@@ -46,8 +46,10 @@
 
    "idle-lock" (minutes, 0 = off) re-locks every temporary unlock, "while tabs
    are open" included, once the computer has had no keyboard or mouse input
-   for that long, or as soon as the screen locks. Two signals feed it, and
-   each one re-checks the real idle time with queryState() before locking:
+   and no tab has played sound for that long, or as soon as the screen locks.
+   Sound counts because watching a video needs no input (tab.audible: sound in
+   the last few seconds, so a long silence still counts as idle). Two signals
+   feed it, and each one re-checks the real idle time before locking:
    - idle.onStateChanged, with a detection interval set on every background
      wake and pref change (it is not guaranteed to survive a restart)
    - the "idle.check" alarm, a fallback poll that runs only while auto-lock
@@ -65,7 +67,8 @@ const idleWatch = async unlocked => {
   }
   if (minutes > 0 && unlocked) {
     if (!(await chrome.alarms.get('idle.check'))) {
-      // polling at a quarter of the idle time keeps a missed idle event at most 25% late
+      // polling at a quarter of the idle time keeps a lock at most 25% late, a missed
+      // idle event as well as one that sound held back (it fires on the next poll)
       chrome.alarms.create('idle.check', {periodInMinutes: Math.max(0.5, minutes / 4)});
     }
   }
@@ -74,13 +77,34 @@ const idleWatch = async unlocked => {
   }
 };
 
+// a tab plays sound now, or stopped less than `minutes` ago ("idle-media-at")
+const mediaActive = async minutes => {
+  if ((await chrome.tabs.query({audible: true})).length) {
+    return true;
+  }
+  const {'idle-media-at': at = 0} = await chrome.storage.session.get('idle-media-at');
+  return Date.now() - at < minutes * 60 * 1000;
+};
+// sound stopping in any tab restarts the idle clock, so the lock waits the
+// full idle time after a video ends instead of firing right away. While sound
+// plays, tabs.query({audible}) sees it. No listener filter: Chrome has none
+chrome.tabs.onUpdated.addListener((tabId, info) => {
+  if (info.audible === false) {
+    chrome.storage.session.set({'idle-media-at': Date.now()});
+  }
+});
+
 const idleLock = async state => {
   const minutes = await idleMinutes();
   if (minutes === 0) {
     return;
   }
+  // a locked screen always locks; otherwise check input and sound
   if (state !== 'locked') {
     state = await chrome.idle.queryState(idleSeconds(minutes));
+    if (state === 'idle' && await mediaActive(minutes)) {
+      return;
+    }
   }
   if (state === 'idle' || state === 'locked') {
     await relock();
