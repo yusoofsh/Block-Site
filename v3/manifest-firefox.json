@@ -1,9 +1,10 @@
 {
   "name": "Block Site",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "manifest_version": 3,
   "background": {
     "scripts": [
+      "utils.js",
       "helper.js",
       "blocker.js",
       "schedule.js",

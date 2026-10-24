@@ -7,10 +7,11 @@
   session rules (own id space, dropped automatically on browser restart):
     1-: temporary "open once" unlocks
 */
-/* global translate, notify, browser, idleWatch */
+/* global translate, notify, browser, idleWatch, lockedUrl */
 
 /* imports */
 if (typeof importScripts !== 'undefined') {
+  self.importScripts('utils.js');
   self.importScripts('helper.js');
   self.importScripts('blocker.js');
   self.importScripts('schedule.js');
@@ -297,17 +298,9 @@ const openOnce = opts => {
   return result;
 };
 
-// the url a tab counts as — for our own blocked page it is the site it stands
-// in for (via ?url=), so a "tab" unlock is not dropped mid-navigation
-const tabUrl = url => {
-  if (!url) {
-    return '';
-  }
-  if (url.startsWith(chrome.runtime.getURL('/data/blocked/'))) {
-    return url.split('&url=')[1] || '';
-  }
-  return url;
-};
+// the url a tab counts as: for our own blocked page, the site it stands in for (see lockedUrl),
+// so a "tab" unlock is not dropped mid-navigation
+const tabUrl = url => url?.startsWith(chrome.runtime.getURL('/data/blocked/')) ? lockedUrl(url) : url || '';
 // a "tab" unlock lives while any open tab still matches its rule; re-check on close
 chrome.tabs.onRemoved.addListener(async closedId => {
   const unlocks = (await getUnlocks()).filter(r => r.id < TAB_ID_MAX);
