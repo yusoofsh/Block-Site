@@ -9,37 +9,38 @@
   <link rel="icon" type="image/png" href="/data/icons/32.png">
 </head>
 <body>
-  <div class="warning" id="warning"></div>
-  <div id="current">
-    <span id="host">…</span>
-    <input type="button" id="toggle" value="">
-  </div>
-  <div id="actions">
-    <input type="button" id="mode" value="">
-  </div>
+  <!-- the current site: its icon, name and status, then one action -->
+  <section id="site">
+    <div class="identity">
+      <span class="icon" aria-hidden="true">
+        <img id="favicon" alt="" hidden>
+        <span id="monogram"></span>
+      </span>
+      <div class="names">
+        <span id="host">…</span>
+        <span id="status"></span>
+      </div>
+    </div>
+
+    <div class="scope" id="scope" role="radiogroup" hidden>
+      <label><input type="radio" name="scope" value="site"><span data-i18n="popup_scope_site"></span></label>
+      <label><input type="radio" name="scope" value="page"><span data-i18n="popup_scope_page"></span></label>
+    </div>
+
+    <button type="button" id="action" class="btn-primary" hidden></button>
+    <p id="warning" role="alert"></p>
+  </section>
+
   <div id="unlocked" hidden>
     <span id="unlocked-count"></span>
     <button type="button" class="btn-primary" id="lock-now" data-i18n="popup_lock_now"></button>
   </div>
-  <button type="button" id="autolock">
+  <button type="button" id="autolock" class="btn-ghost">
     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
     <span id="autolock-text"></span>
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
   </button>
-  <input type="search" id="filter" data-i18n="popup_filter" data-i18n-value="placeholder">
-  <div id="list"></div>
-  <div id="empty" data-i18n="popup_empty" hidden></div>
-  <template id="row">
-    <div class="site">
-      <div class="info">
-        <span class="host"></span>
-        <span class="note"></span>
-        <span class="meta"></span>
-      </div>
-      <input type="button" class="remove" value="✕" data-i18n="popup_remove" data-i18n-value="title">
-    </div>
-  </template>
-  <script src="/utils.js"></script>
+
   <script src="/data/blocked/tld.js"></script>
   <script src="index.js"></script>
 </body>

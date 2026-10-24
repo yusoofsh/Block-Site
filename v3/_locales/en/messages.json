@@ -239,44 +239,11 @@
   "options_manual_pause": {
     "message": "Forever"
   },
-  "popup_filter": {
-    "message": "Filter blocked sites…"
-  },
-  "popup_empty": {
-    "message": "No blocked sites yet."
-  },
-  "popup_remove": {
-    "message": "Remove this rule"
-  },
   "popup_no_site": {
-    "message": "Not a blockable site"
-  },
-  "popup_block": {
-    "message": "Block this URL"
-  },
-  "popup_block_domain": {
-    "message": "Block this Domain"
-  },
-  "popup_unblock": {
-    "message": "Unblock this URL"
-  },
-  "popup_unblock_domain": {
-    "message": "Unblock this Domain"
-  },
-  "popup_switch_domain": {
-    "message": "Switch to Domain"
-  },
-  "popup_switch_url": {
-    "message": "Switch to URL"
-  },
-  "popup_toggle": {
-    "message": "(Un)block this site"
+    "message": "This page can't be blocked"
   },
   "popup_reverse_hint": {
     "message": "Blocked by default in reverse mode. Open the site and use \"Add to Whitelist\" to allow it."
-  },
-  "popup_blocked_count": {
-    "message": "blocked ## times"
   },
   "blocked_restricted": {
     "message": "Restricted Access"
@@ -517,5 +484,35 @@
   },
   "blocked_reminder_back": {
     "message": "Go back"
+  },
+  "popup_scope_site": {
+    "message": "Whole site"
+  },
+  "popup_scope_page": {
+    "message": "This page"
+  },
+  "popup_block_site": {
+    "message": "Block ##"
+  },
+  "popup_block_page": {
+    "message": "Block this page"
+  },
+  "popup_unblock_site": {
+    "message": "Unblock ##"
+  },
+  "popup_status_open": {
+    "message": "Not blocked"
+  },
+  "popup_status_blocked": {
+    "message": "Blocked"
+  },
+  "popup_status_unlocked": {
+    "message": "Blocked · unlocked for now"
+  },
+  "popup_status_paused": {
+    "message": "Blocked · paused right now"
+  },
+  "popup_status_allowed": {
+    "message": "Allowed"
   }
 }

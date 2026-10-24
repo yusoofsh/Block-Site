@@ -212,7 +212,7 @@ form {
    or no password set). It reads as a pause, not a lock: an amber hourglass
    badge, a question, and "Go back" as the main button next to "Open anyway" */
 html.reminder {
-  --lock: #d97706;
+  --lock: var(--warning);
 }
 html:not(.reminder) :is(#question, #back, .hourglass-glyph),
 html.reminder .lock-glyph {
