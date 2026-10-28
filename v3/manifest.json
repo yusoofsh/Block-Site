@@ -1,6 +1,6 @@
 {
   "name": "Block Site",
-  "version": "0.7.3",
+  "version": "0.7.4",
   "manifest_version": 3,
   "background": {
     "service_worker": "worker.js"
@@ -43,6 +43,10 @@
     "matches": ["<all_urls>"],
     "js": ["data/inject/page-blocker.js"],
     "run_at": "document_start"
+  }, {
+    "matches": ["<all_urls>"],
+    "js": ["data/inject/media-activity.js"],
+    "all_frames": true
   }],
   "web_accessible_resources": [{
     "resources": [
