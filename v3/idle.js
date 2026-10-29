@@ -46,10 +46,12 @@
 
    "idle-lock" (minutes, 0 = off) re-locks every temporary unlock, "while tabs
    are open" included, once the computer has had no keyboard or mouse input
-   and no tab has played sound for that long, or as soon as the screen locks.
-   Sound counts because watching a video needs no input (tab.audible: sound in
-   the last few seconds, so a long silence still counts as idle). Two signals
-   feed it, and each one re-checks the real idle time before locking:
+   and no tab has played media for that long, or as soon as the screen locks.
+   Media counts because watching a video needs no input. It is seen two ways:
+   tab.audible (sound in the last few seconds, so a long silence still counts as
+   idle) and a playing <video> or <audio> in any frame (data/inject/media-activity.js),
+   which also covers a muted video and picture-in-picture. Two signals feed the
+   lock, and each one re-checks the real idle time before locking:
    - idle.onStateChanged, with a detection interval set on every background
      wake and pref change (it is not guaranteed to survive a restart)
    - the "idle.check" alarm, a fallback poll that runs only while auto-lock
@@ -77,20 +79,39 @@ const idleWatch = async unlocked => {
   }
 };
 
-// a tab plays sound now, or stopped less than `minutes` ago ("idle-media-at")
-const mediaActive = async minutes => {
+// a tab plays sound, or a page plays a video, even muted or in picture-in-picture
+const mediaPlaying = async () => {
   if ((await chrome.tabs.query({audible: true})).length) {
+    return true;
+  }
+  // media-activity.js answers for its frames. Tabs with no such script (discarded,
+  // not loaded yet) reject, and count as not playing
+  const tabs = await chrome.tabs.query({discarded: false, url: ['http://*/*', 'https://*/*']});
+  const answers = await Promise.all(tabs.map(tab => {
+    return chrome.tabs.sendMessage(tab.id, {method: 'media-playing'}).catch(() => false);
+  }));
+  return answers.includes(true);
+};
+// media is playing now, or stopped less than `minutes` ago ("idle-media-at")
+const mediaActive = async minutes => {
+  if (await mediaPlaying()) {
     return true;
   }
   const {'idle-media-at': at = 0} = await chrome.storage.session.get('idle-media-at');
   return Date.now() - at < minutes * 60 * 1000;
 };
-// sound stopping in any tab restarts the idle clock, so the lock waits the
-// full idle time after a video ends instead of firing right away. While sound
-// plays, tabs.query({audible}) sees it. No listener filter: Chrome has none
+// sound or a video stopping restarts the idle clock, so the lock waits the
+// full idle time after a video ends instead of firing right away. While media
+// plays, mediaPlaying() sees it. No listener filter: Chrome has none
+const mediaStopped = () => chrome.storage.session.set({'idle-media-at': Date.now()});
 chrome.tabs.onUpdated.addListener((tabId, info) => {
   if (info.audible === false) {
-    chrome.storage.session.set({'idle-media-at': Date.now()});
+    mediaStopped();
+  }
+});
+chrome.runtime.onMessage.addListener(request => {
+  if (request.method === 'media-stopped') {
+    mediaStopped();
   }
 });
 
