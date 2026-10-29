@@ -129,7 +129,8 @@ document.addEventListener('submit', e => {
     password: e.target.querySelector('[type=password]')?.value || ''
   }, r => {
     if (r === true) {
-      document.getElementById('url').click();
+      // replace the lock page instead of adding to history, so Back from the site skips it
+      location.replace(document.getElementById('url').href);
     }
     else {
       showError(r?.error);
