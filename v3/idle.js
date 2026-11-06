@@ -50,8 +50,11 @@
    Media counts because watching a video needs no input. It is seen two ways:
    tab.audible (sound in the last few seconds, so a long silence still counts as
    idle) and a playing <video> or <audio> in any frame (data/inject/media-activity.js),
-   which also covers a muted video and picture-in-picture. Two signals feed the
-   lock, and each one re-checks the real idle time before locking:
+   which also covers a muted video and picture-in-picture. Each check records
+   the last time it saw media, so one missed look (a source swap between two
+   videos, a player torn down by page navigation, a lost answer) cannot lock a
+   session that was just being watched. Two signals feed the lock, and each one
+   re-checks the real idle time before locking:
    - idle.onStateChanged, with a detection interval set on every background
      wake and pref change (it is not guaranteed to survive a restart)
    - the "idle.check" alarm, a fallback poll that runs only while auto-lock
@@ -92,17 +95,21 @@ const mediaPlaying = async () => {
   }));
   return answers.includes(true);
 };
-// media is playing now, or stopped less than `minutes` ago ("idle-media-at")
+// media plays now, or was last seen or heard stopping less than `minutes` ago
+// ("idle-media-at"). Every sighting restarts that clock: a video can end with no
+// event (the page swaps its source for the next video or an ad, or removes the
+// player), so the clock is never left to stop events alone
 const mediaActive = async minutes => {
   if (await mediaPlaying()) {
+    await chrome.storage.session.set({'idle-media-at': Date.now()});
     return true;
   }
   const {'idle-media-at': at = 0} = await chrome.storage.session.get('idle-media-at');
   return Date.now() - at < minutes * 60 * 1000;
 };
-// sound or a video stopping restarts the idle clock, so the lock waits the
-// full idle time after a video ends instead of firing right away. While media
-// plays, mediaPlaying() sees it. No listener filter: Chrome has none
+// sound or a video stopping restarts the idle clock too, so the lock waits the
+// full idle time after a video ends instead of firing right away. No listener
+// filter: Chrome has none
 const mediaStopped = () => chrome.storage.session.set({'idle-media-at': Date.now()});
 chrome.tabs.onUpdated.addListener((tabId, info) => {
   if (info.audible === false) {
@@ -120,10 +127,13 @@ const idleLock = async state => {
   if (minutes === 0) {
     return;
   }
-  // a locked screen always locks; otherwise check input and sound
+  // a locked screen always locks. Otherwise check input and media. Media is looked
+  // at even while the user is active, so the poll keeps the clock fresh for the
+  // moment the user stops touching the computer
   if (state !== 'locked') {
+    const watching = await mediaActive(minutes);
     state = await chrome.idle.queryState(idleSeconds(minutes));
-    if (state === 'idle' && await mediaActive(minutes)) {
+    if (state === 'idle' && watching) {
       return;
     }
   }
