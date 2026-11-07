@@ -1,16 +1,16 @@
-/* global convert, notify, translate, resume, ruleRegExp, relock */
+/* global convert, notify, translate, resume, ruleRegExp, relock, getUnlocks */
 
-// a plausible URL that a block pattern would match, used to tell whether a
-// temporary "open once" allow rule still shadows a currently-blocked site
-const sampleUrl = host => {
+// plausible URLs that a block pattern would match, used to tell whether a
+// temporary "open once" allow rule still shadows a currently-blocked site. A
+// wildcard stands for nothing ("http*://") or for a subdomain ("*.site.com")
+const sampleUrls = host => {
   if (!host || host.startsWith('R:')) {
-    return null; // regex rules: cannot derive a sample safely
+    return []; // regex rules: cannot derive a sample safely
   }
-  let h = host.replace(/^\*:\/\//, 'https://').replace(/\*/g, '');
-  if (h.indexOf('://') === -1) {
-    h = 'https://' + h;
-  }
-  return h;
+  return ['', 'www'].map(fill => {
+    const h = host.replace(/^\*:\/\//, 'https://').replace(/\*/g, fill);
+    return h.indexOf('://') === -1 ? 'https://' + h : h;
+  });
 };
 
 /* update rules */
@@ -215,7 +215,7 @@ const update = async () => {
       const allows = (await chrome.declarativeNetRequest.getSessionRules())
         .filter(r => r.action?.type === 'allow');
       if (allows.length) {
-        const samples = hss.map(sampleUrl).filter(Boolean);
+        const samples = hss.flatMap(sampleUrls);
         const stale = allows.filter(rule => {
           const re = ruleRegExp(rule);
           return re && samples.some(u => re.test(u)) === false;
@@ -237,9 +237,17 @@ const update = async () => {
 
     const current = await chrome.declarativeNetRequest.getDynamicRules();
     // get schedule rules
-    const scheduleRegExps = current
+    const allowedRegExps = current
       .filter(r => r.id > 999)
       .map(r => new RegExp(r.condition.regexFilter, 'i'));
+    // a tab a temporary unlock still covers keeps its page: reloading it would
+    // only end its video, picture-in-picture included
+    for (const rule of await getUnlocks()) {
+      const re = ruleRegExp(rule);
+      if (re) {
+        allowedRegExps.push(re);
+      }
+    }
 
     const regExps = current.filter(r => {
       if (prefs.reverse && r.id === 1) {
@@ -252,8 +260,8 @@ const update = async () => {
       if (!tab.url) {
         continue;
       }
-      // the tab is currently allowed by an active schedule rule
-      if (scheduleRegExps.some(r => r.test(tab.url))) {
+      // the tab is currently allowed by an active schedule rule or unlock
+      if (allowedRegExps.some(r => r.test(tab.url))) {
         continue;
       }
       if (prefs.reverse) {
