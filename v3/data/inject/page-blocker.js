@@ -76,14 +76,11 @@ if (navigator.userAgent.includes('OPR/')) {
   validate();
 }
 
-let href = location.href;
+// a page that is already loaded is never blocked by a later address change
+// (history.pushState): a site's own navigation, such as the next video, must
+// not lock a tab the user is using
 chrome.runtime.onMessage.addListener((request, sender, response) => {
-  // push state
-  if (request.method === 'address-changed' && href !== location.href) {
-    href = location.href;
-    validate();
-  }
-  else if (request.method === 'get-referrer') {
+  if (request.method === 'get-referrer') {
     response(document.referrer);
   }
 });
