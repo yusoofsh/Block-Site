@@ -339,15 +339,6 @@ chrome.storage.onChanged.addListener(ps => {
   }
 });
 
-// if a page uses history API to push state, the blocker script is not being called
-chrome.tabs.onUpdated.addListener((tabId, info) => {
-  if (info.url) {
-    chrome.tabs.sendMessage(tabId, {
-      method: 'address-changed'
-    }, () => chrome.runtime.lastError);
-  }
-});
-
 {
   const once = () => {
     if (once.done) {
