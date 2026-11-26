@@ -1,6 +1,6 @@
 {
   "name": "Block Site",
-  "version": "0.8.2",
+  "version": "0.9.0",
   "manifest_version": 3,
   "background": {
     "service_worker": "worker.js"
@@ -19,6 +19,9 @@
   ],
   "host_permissions": [
     "<all_urls>"
+  ],
+  "optional_permissions": [
+    "webRequest"
   ],
   "storage": {
     "managed_schema": "schema.json"

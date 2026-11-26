@@ -5,6 +5,9 @@
   "options_master_password": {
     "message": "Password"
   },
+  "options_master_password_hint": {
+    "message": "Set a master password to protect these settings. After it is saved, enter it and click Unlock Options to make changes. If no master password is set, options are unprotected and Unlock Options is disabled."
+  },
   "options_master_password_comment": {
     "message": "Enter a master password to protect your preferences"
   },
@@ -92,6 +95,21 @@
   "options_blocing_options_header": {
     "message": "Blocking Options"
   },
+  "options_behavior_blocking_header": {
+    "message": "Blocking"
+  },
+  "options_behavior_context_menu_header": {
+    "message": "Context menu"
+  },
+  "options_behavior_pause_header": {
+    "message": "Pausing"
+  },
+  "options_behavior_protection_header": {
+    "message": "Protection"
+  },
+  "options_behavior_interface_header": {
+    "message": "Interface"
+  },
   "options_password_options_header": {
     "message": "Password Options"
   },
@@ -111,10 +129,70 @@
     "message": "Import Rules (TXT File)"
   },
   "options_schedule_header": {
-    "message": "Schedule Unblocking"
+    "message": "Blocking Schedules"
   },
   "options_schedule_offset": {
     "message": "Schedule offset in minutes"
+  },
+  "options_schedule_when": {
+    "message": "On the selected days"
+  },
+  "options_schedule_mode_block": {
+    "message": "Block between"
+  },
+  "options_schedule_mode_all_day": {
+    "message": "Allow all day (blocking is paused)"
+  },
+  "options_schedule_from": {
+    "message": "From"
+  },
+  "options_schedule_to": {
+    "message": "To"
+  },
+  "options_schedule_rule": {
+    "message": "Rule (optional)"
+  },
+  "options_schedule_rule_hint": {
+    "message": "Leave empty to apply to all sites. A rule is a regular expression that limits this entry to matching URLs."
+  },
+  "options_schedule_list_header": {
+    "message": "Schedule entries"
+  },
+  "options_schedule_empty": {
+    "message": "No schedule entries yet. Blocking stays active all the time."
+  },
+  "options_schedule_add": {
+    "message": "Add"
+  },
+  "options_schedule_update": {
+    "message": "Update"
+  },
+  "options_schedule_cancel": {
+    "message": "Cancel"
+  },
+  "options_schedule_edit": {
+    "message": "Edit"
+  },
+  "options_schedule_remove": {
+    "message": "Remove"
+  },
+  "options_schedule_all_sites": {
+    "message": "All sites"
+  },
+  "options_schedule_all_day_short": {
+    "message": "All day"
+  },
+  "options_schedule_days_required": {
+    "message": "Select at least one day."
+  },
+  "options_schedule_times_required": {
+    "message": "Enter both a start and an end time."
+  },
+  "options_schedule_invalid_range": {
+    "message": "The start time must be before the end time."
+  },
+  "options_schedule_help": {
+    "message": "Leave the rule empty to apply an entry to all sites. A rule is a regular expression that limits the entry to matching URLs. An 'Allow all day' entry covers the entire day."
   },
   "options_import_header": {
     "message": "Backup and Restore"
@@ -167,6 +245,12 @@
   "options_contextmenu_frame": {
     "message": "Show \"(Un)Block this Frame\" context menu option on frame context"
   },
+  "options_contextmenu_redirect_inspector": {
+    "message": "Show \"Track redirects in this tab\" context menu option on page context"
+  },
+  "options_contextmenu_redirect_inspector_action": {
+    "message": "Show \"Track redirects in this tab\" context menu option on browser action's context"
+  },
   "options_no_pass_on_add": {
     "message": "Do not ask for the master password to block a new hostname"
   },
@@ -211,6 +295,9 @@
   },
   "options_intro": {
     "message": "To save options or set a master password, use the bar at the bottom of the page. If you're new, block new websites by visiting the page and clicking the action button (it's in the extensions menu after installation). No need to manually make new rules."
+  },
+  "options_intro_rules": {
+    "message": "If you're new, block new websites by visiting the page and clicking the action button (it's in the extensions menu after installation). No need to manually make new rules."
   },
   "options_sch_helper_1": {
     "message": "Generate unblocking periods for the following blocked hours"
